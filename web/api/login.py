@@ -14,13 +14,14 @@ import time
 from datetime import datetime
 
 from fnewscrawler.spiders.iwencai.login import IwencaiLogin
+from fnewscrawler.spiders.eastmoney.login import EastMoneyLogin
 from fnewscrawler.utils.logger import LOGGER
 
 # 创建路由器
 router = APIRouter()
 
 # 全局登录实例管理
-login_instances: Dict[str, IwencaiLogin] = {}
+login_instances: Dict[str, Any] = {}
 login_tasks: Dict[str, Dict[str, Any]] = {}
 
 
@@ -52,10 +53,10 @@ async def get_supported_platforms():
                     "login_types": ["微信","QQ","同花顺"]
                 },
                 {
-                    "id": "dongfagn",
+                    "id": "eastmoney",
                     "name": "东方财富",
                     "description": "东方财富平台",
-                    "login_types": ["微信"]
+                    "login_types": ["微信", "东方财富"]
                 }
             ]
         }
@@ -66,11 +67,15 @@ async def get_supported_platforms():
 async def get_supported_qr_types(platform: str):
     """获取指定平台支持的二维码登录方式"""
     try:
-        if platform != "iwencai":
+        if platform not in ["iwencai", "eastmoney"]:
             raise HTTPException(status_code=400, detail=f"不支持的平台: {platform}")
         
         # 创建临时实例获取支持的登录方式
-        login_instance = IwencaiLogin()
+        if platform == "iwencai":
+            login_instance = IwencaiLogin()
+        elif platform == "eastmoney":
+            login_instance = EastMoneyLogin()
+        
         supported_types = login_instance.get_supported_qr_types()
         
         return {
@@ -94,13 +99,15 @@ async def start_qr_login(request: QRLoginRequest):
         platform = request.platform
         
         # 检查平台支持
-        if platform != "iwencai":
+        if platform not in ["iwencai", "eastmoney"]:
             raise HTTPException(status_code=400, detail=f"不支持的平台: {platform}")
         
         # 创建登录实例
         if platform not in login_instances:
             if platform == "iwencai":
                 login_instances[platform] = IwencaiLogin()
+            elif platform == "eastmoney":
+                login_instances[platform] = EastMoneyLogin()
             else:
                 raise HTTPException(status_code=400, detail=f"无法创建登录实例: {platform}")
         
@@ -253,11 +260,15 @@ async def cancel_qr_login(task_id: str):
 async def get_login_status(platform: str):
     """获取平台登录状态"""
     try:
-        if platform != "iwencai":
+        if platform not in ["iwencai", "eastmoney"]:
             raise HTTPException(status_code=400, detail=f"不支持的平台: {platform}")
         
         # 创建临时实例检查登录状态
-        login_instance = IwencaiLogin()
+        if platform == "iwencai":
+            login_instance = IwencaiLogin()
+        elif platform == "eastmoney":
+            login_instance = EastMoneyLogin()
+        
         is_logged_in = await login_instance.get_login_status()
         
         return LoginStatusResponse(
@@ -278,11 +289,15 @@ async def get_login_status(platform: str):
 async def clear_login_cache(platform: str):
     """清除登录缓存"""
     try:
-        if platform != "iwencai":
+        if platform not in ["iwencai", "eastmoney"]:
             raise HTTPException(status_code=400, detail=f"不支持的平台: {platform}")
         
         # 创建临时实例清除缓存
-        login_instance = IwencaiLogin()
+        if platform == "iwencai":
+            login_instance = IwencaiLogin()
+        elif platform == "eastmoney":
+            login_instance = EastMoneyLogin()
+        
         success = await login_instance.clean_login_state()
         
         return LoginStatusResponse(

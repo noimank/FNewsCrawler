@@ -61,6 +61,7 @@
                             <label for="platform-select" class="form-label">选择平台</label>
                             <select class="form-select" id="platform-select" onchange="loadQRTypes()">
                                 <option value="iwencai">问财</option>
+                                <option value="eastmoney">东方财富</option>
                             </select>
                         </div>
                         
@@ -178,6 +179,9 @@ async function loadQRTypes() {
                 qrTypeSelect.value = qrTypes[0];
                 updateLoginButton();
             }
+            
+            // 平台切换时重新检查登录状态
+            checkLoginStatus();
         }
     } catch (error) {
         console.error('加载登录方式失败:', error);
@@ -205,18 +209,20 @@ function updateLoginButton() {
 // 检查登录状态
 async function checkLoginStatus() {
     try {
-        const response = await axios.get('/api/login/platform-status/iwencai');
+        const platform = document.getElementById('platform-select').value;
+        const response = await axios.get(`/api/login/platform-status/${platform}`);
         
         if (response.data.success) {
             const data = response.data.data;
             const isLoggedIn = data.is_logged_in;
+            const platformName = platform === 'iwencai' ? '问财' : '东方财富';
             
             let statusHtml = '';
             if (isLoggedIn) {
                 statusHtml = `
                     <div class="alert alert-success" role="alert">
                         <i class="fas fa-check-circle me-2"></i>
-                        <strong>已登录</strong>
+                        <strong>${platformName} - 已登录</strong>
                         <hr>
                         <small class="text-muted">检查时间: ${new Date(data.check_time).toLocaleString()}</small>
                     </div>
@@ -225,7 +231,7 @@ async function checkLoginStatus() {
                 statusHtml = `
                     <div class="alert alert-warning" role="alert">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>未登录</strong>
+                        <strong>${platformName} - 未登录</strong>
                         <hr>
                         <small class="text-muted">检查时间: ${new Date(data.check_time).toLocaleString()}</small>
                     </div>
@@ -249,14 +255,17 @@ async function checkLoginStatus() {
 // 清除登录缓存
 async function clearLoginCache() {
     try {
-        showMessage('正在清除登录缓存...', 'info');
-        const response = await axios.delete('/api/login/cache/iwencai');
+        const platform = document.getElementById('platform-select').value;
+        const platformName = platform === 'iwencai' ? '问财' : '东方财富';
+        
+        showMessage(`正在清除${platformName}登录缓存...`, 'info');
+        const response = await axios.delete(`/api/login/cache/${platform}`);
         
         if (response.data.success) {
-            showMessage('登录缓存已清除', 'success');
+            showMessage(`${platformName}登录缓存已清除`, 'success');
             checkLoginStatus(); // 重新检查状态
         } else {
-            showMessage('清除登录缓存失败', 'danger');
+            showMessage(`清除${platformName}登录缓存失败`, 'danger');
         }
     } catch (error) {
         showMessage('清除登录缓存失败: ' + error.message, 'danger');

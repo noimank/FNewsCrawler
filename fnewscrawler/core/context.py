@@ -1,6 +1,7 @@
 import json
 import asyncio
 import json
+import os
 import time
 from typing import Dict, Any, Optional, Set
 
@@ -27,9 +28,8 @@ class ContextManager:
         self._creating_contexts: Set[str] = set()  # 正在创建的上下文
 
         # 配置参数
-        self._max_context_age = 3600  # 上下文最大存活时间（秒）
-        self._max_idle_time = 600  # 最大空闲时间（秒）
-        self._health_check_interval = 300  # 健康检查间隔（秒）
+        self._max_idle_time = int(os.environ.get("PW_CONTEXT_MAX_IDLE_TIME", 3600))  # 最大空闲时间（秒）
+        self._health_check_interval = int(os.environ.get("PW_CONTEXT_HEALTH_CHECK_TIME", 300))  # 健康检查间隔（秒）
 
         # 清理任务相关
         self._cleanup_task = None
@@ -76,14 +76,16 @@ class ContextManager:
 
         async with self._global_lock:
             for site_name in list(self._contexts.keys()):
-                creation_time = self._context_creation_time.get(site_name, 0)
+                # creation_time = self._context_creation_time.get(site_name, 0)
                 last_used = self._context_last_used.get(site_name, 0)
 
                 # 检查是否过期
-                age = current_time - creation_time
+                # age = current_time - creation_time
                 idle_time = current_time - last_used
+                if self._max_idle_time <=0:
+                    continue
 
-                if age > self._max_context_age or idle_time > self._max_idle_time:
+                if  idle_time > self._max_idle_time:
                     expired_sites.append(site_name)
 
         # 清理过期上下文

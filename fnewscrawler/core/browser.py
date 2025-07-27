@@ -25,7 +25,7 @@ class BrowserManager:
 
         self._browser: Optional[Browser] = None
         self._playwright: Optional[Playwright] = None
-        self._browser_lock = asyncio.Lock()  # 使用可重入锁
+        self._browser_lock = asyncio.Lock()
         self._is_initializing = False
         self._last_health_check = 0
         self._health_check_interval = 30  # 30秒健康检查间隔

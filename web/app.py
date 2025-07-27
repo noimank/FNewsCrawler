@@ -6,16 +6,47 @@ FastAPI Web应用主文件
 提供财经新闻爬虫和登录管理的Web API接口
 """
 
-from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
-import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-from .api import login_router, crawler_router
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
 from fnewscrawler.utils.logger import LOGGER
+from .api import login_router, crawler_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时的操作（如果需要）
+    yield
+
+    # 关闭时的操作
+    try:
+        LOGGER.info("FNewsCrawler Web应用正在关闭")
+
+        # 清理浏览器资源
+        from fnewscrawler.core.browser import browser_manager
+        await browser_manager.close()
+
+        # 清理登录实例
+        from web.api.login import login_instances
+        for platform, instance in login_instances.items():
+            try:
+                await instance.close()
+                LOGGER.info(f"已关闭 {platform} 登录实例")
+            except Exception as e:
+                LOGGER.warning(f"关闭 {platform} 登录实例时发生错误: {e}")
+
+        login_instances.clear()
+        LOGGER.info("FNewsCrawler Web应用关闭完成")
+    except Exception as e:
+        LOGGER.error(f"应用关闭时发生错误: {e}")
+
 
 # 创建FastAPI应用实例
 app = FastAPI(
@@ -23,7 +54,8 @@ app = FastAPI(
     description="财经新闻爬虫和登录管理Web应用",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # 添加CORS中间件
@@ -83,30 +115,5 @@ async def crawler_page(request: Request):
         {"request": request, "title": "爬虫管理"}
     )
 
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """应用关闭事件"""
-    try:
-        LOGGER.info("FNewsCrawler Web应用正在关闭")
-        
-        # 清理浏览器资源
-        from fnewscrawler.core.browser import browser_manager
-        await browser_manager.close()
-        
-        # 清理登录实例
-        from web.api.login import login_instances
-        for platform, instance in login_instances.items():
-            try:
-                await instance.close()
-                LOGGER.info(f"已关闭 {platform} 登录实例")
-            except Exception as e:
-                LOGGER.warning(f"关闭 {platform} 登录实例时发生错误: {e}")
-        
-        login_instances.clear()
-        LOGGER.info("FNewsCrawler Web应用关闭完成")
-    except Exception as e:
-        LOGGER.error(f"应用关闭时发生错误: {e}")
 
 

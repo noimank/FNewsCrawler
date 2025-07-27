@@ -271,7 +271,7 @@ class IwencaiLogin(QRLoginBase):
                 return False
 
                 # 等待登录成功的标志元素出现
-            await self.login_page.wait_for_selector(".login-box .user-photo", state="visible", timeout=3000)
+            await self.login_page.wait_for_selector(".login-box .user-photo", state="visible", timeout=500)
             return True
         except Exception as e:
             return False
@@ -293,21 +293,6 @@ class IwencaiLogin(QRLoginBase):
         finally:
             if temp_page:
                 await temp_page.close()
-
-    async def check_login_status_without_close(self) -> bool:
-        """检查登录状态（不关闭浏览器，用于二维码登录过程中）"""
-        try:
-            # 检查是否已初始化  
-            if not self._has_inited():
-                print(" page：",  self.login_page)
-                return False
-
-                # 直接验证登录状态，不重新导航
-            return await self.verify_login_success()
-
-        except Exception as e:
-            LOGGER.error(f"检查登录状态失败: {e}")
-            return False
 
     async def save_context_state(self):
         """  

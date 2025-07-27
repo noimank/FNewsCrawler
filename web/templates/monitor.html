@@ -1,0 +1,719 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+.status-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #dee2e6;
+}
+
+.status-card.healthy {
+    border-left-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.status-card.unhealthy {
+    border-left-color: #dc3545;
+    background-color: #fff8f8;
+}
+
+.status-card.degraded {
+    border-left-color: #ffc107;
+    background-color: #fffdf5;
+}
+
+.status-card.error {
+    border-left-color: #dc3545;
+    background-color: #fff8f8;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-indicator.healthy {
+    background-color: #28a745;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.4);
+}
+
+.status-indicator.unhealthy {
+    background-color: #dc3545;
+    box-shadow: 0 0 8px rgba(220, 53, 69, 0.4);
+}
+
+.status-indicator.degraded {
+    background-color: #ffc107;
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
+}
+
+.status-indicator.error {
+    background-color: #dc3545;
+    box-shadow: 0 0 8px rgba(220, 53, 69, 0.4);
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.action-btn {
+    margin: 2px;
+}
+
+.context-item {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background-color: #f8f9fa;
+}
+
+.context-item.healthy {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.context-item.unhealthy {
+    border-color: #dc3545;
+    background-color: #fff8f8;
+}
+
+
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+
+<!-- 页面标题 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2>
+                    <i class="fas fa-chart-line me-2"></i>
+                    系统监控
+                </h2>
+                <p class="text-muted mb-0">Browser 和 Context 服务状态监控</p>
+            </div>
+            <div>
+                <div class="form-check form-switch d-inline-block me-3">
+                    <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                    <label class="form-check-label" for="autoRefresh">
+                        <small>自动刷新 (30s)</small>
+                    </label>
+                </div>
+                <button class="btn btn-outline-primary" onclick="refreshAll()">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    刷新状态
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 服务概览 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card status-card" id="overview-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    服务概览
+                    <span id="overall-status-indicator" class="status-indicator ms-2"></span>
+                </h5>
+            </div>
+            <div class="card-body position-relative">
+                <div id="overview-loading" class="loading-overlay d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                </div>
+                <div id="overview-content">
+                    <div class="row text-center">
+                        <div class="col-md-6">
+                            <div class="metric-value" id="browser-status-text">-</div>
+                            <div class="metric-label">Browser 状态</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="metric-value" id="context-count-text">-</div>
+                            <div class="metric-label">活跃上下文数</div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <small class="text-muted">
+                                最后更新: <span id="overview-timestamp">-</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Browser 服务监控 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card status-card" id="browser-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-globe me-2"></i>
+                    Browser 服务
+                    <span id="browser-status-indicator" class="status-indicator ms-2"></span>
+                </h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-success action-btn" onclick="browserAction('initialize')">
+                        <i class="fas fa-play me-1"></i>初始化
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning action-btn" onclick="browserAction('restart')">
+                        <i class="fas fa-redo me-1"></i>重启
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger action-btn" onclick="browserAction('close')">
+                        <i class="fas fa-stop me-1"></i>关闭
+                    </button>
+                </div>
+            </div>
+            <div class="card-body position-relative">
+                <div id="browser-loading" class="loading-overlay d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                </div>
+                <div id="browser-content">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="metric-value" id="browser-status">-</div>
+                            <div class="metric-label">状态</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-value" id="browser-version">-</div>
+                            <div class="metric-label">版本</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-value" id="browser-contexts">-</div>
+                            <div class="metric-label">上下文数</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-value" id="browser-connected">-</div>
+                            <div class="metric-label">连接状态</div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <small class="text-muted">
+                                最后健康检查: <span id="browser-health-check">-</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Context 服务监控 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card status-card" id="context-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-layer-group me-2"></i>
+                    Context 服务
+                    <span id="context-status-indicator" class="status-indicator ms-2"></span>
+                </h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-info action-btn" onclick="contextAction('cleanup')">
+                        <i class="fas fa-broom me-1"></i>清理过期
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger action-btn" onclick="contextAction('close_all')">
+                        <i class="fas fa-times-circle me-1"></i>关闭所有
+                    </button>
+                </div>
+            </div>
+            <div class="card-body position-relative">
+                <div id="context-loading" class="loading-overlay d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                </div>
+                <div id="context-content">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="metric-value" id="context-total">-</div>
+                            <div class="metric-label">总上下文数</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="metric-value" id="context-creating">-</div>
+                            <div class="metric-label">创建中</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="metric-value" id="context-healthy-count">-</div>
+                            <div class="metric-label">健康上下文</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 上下文详情列表 -->
+                    <div id="context-details">
+                        <h6 class="mb-3">上下文详情</h6>
+                        <div id="context-list">
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                暂无活跃上下文
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 操作日志 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    操作日志
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
+                    <i class="fas fa-trash me-1"></i>清空日志
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="operation-logs" style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        暂无操作记录
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let autoRefreshInterval = null;
+let operationLogs = [];
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    refreshAll();
+    startAutoRefresh();
+    
+    // 自动刷新开关
+    document.getElementById('autoRefresh').addEventListener('change', function() {
+        if (this.checked) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    });
+});
+
+// 开始自动刷新
+function startAutoRefresh() {
+    stopAutoRefresh(); // 先停止现有的
+    autoRefreshInterval = setInterval(refreshAll, 30000); // 30秒刷新一次
+}
+
+// 停止自动刷新
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+// 刷新所有状态
+async function refreshAll() {
+    await Promise.all([
+        refreshOverview(),
+        refreshBrowserStatus(),
+        refreshContextStatus()
+    ]);
+}
+
+// 刷新服务概览
+async function refreshOverview() {
+    showLoading('overview');
+    try {
+        const response = await axios.get('/api/monitor/overview');
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            updateOverviewDisplay(data);
+        } else {
+            showMessage('获取服务概览失败: ' + response.data.message, 'danger');
+        }
+    } catch (error) {
+        console.error('获取服务概览失败:', error);
+        showMessage('获取服务概览失败: ' + error.message, 'danger');
+    } finally {
+        hideLoading('overview');
+    }
+}
+
+// 刷新Browser状态
+async function refreshBrowserStatus() {
+    showLoading('browser');
+    try {
+        const response = await axios.get('/api/monitor/browser/status');
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            updateBrowserDisplay(data);
+        } else {
+            showMessage('获取Browser状态失败: ' + response.data.message, 'danger');
+        }
+    } catch (error) {
+        console.error('获取Browser状态失败:', error);
+        showMessage('获取Browser状态失败: ' + error.message, 'danger');
+    } finally {
+        hideLoading('browser');
+    }
+}
+
+// 刷新Context状态
+async function refreshContextStatus() {
+    showLoading('context');
+    try {
+        const response = await axios.get('/api/monitor/context/status');
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            updateContextDisplay(data);
+        } else {
+            showMessage('获取Context状态失败: ' + response.data.message, 'danger');
+        }
+    } catch (error) {
+        console.error('获取Context状态失败:', error);
+        showMessage('获取Context状态失败: ' + error.message, 'danger');
+    } finally {
+        hideLoading('context');
+    }
+}
+
+// 更新概览显示
+function updateOverviewDisplay(data) {
+    const overallStatus = data.overall_status;
+    const browserStatus = data.services.browser.status || 'unknown';
+    const contextCount = data.services.context.total_contexts || 0;
+    
+    // 更新状态指示器
+    updateStatusIndicator('overall-status-indicator', overallStatus);
+    updateCardStatus('overview-card', overallStatus);
+    
+    // 更新数值
+    document.getElementById('browser-status-text').textContent = getStatusText(browserStatus);
+    document.getElementById('context-count-text').textContent = contextCount;
+    document.getElementById('overview-timestamp').textContent = formatTimestamp(data.timestamp);
+}
+
+// 更新Browser显示
+function updateBrowserDisplay(data) {
+    const status = data.status || 'unknown';
+    
+    // 更新状态指示器和卡片
+    updateStatusIndicator('browser-status-indicator', status);
+    updateCardStatus('browser-card', status);
+    
+    // 更新详细信息
+    document.getElementById('browser-status').textContent = getStatusText(status);
+    document.getElementById('browser-version').textContent = data.version || '-';
+    document.getElementById('browser-contexts').textContent = data.context_count || '-';
+    document.getElementById('browser-connected').textContent = data.is_connected ? '已连接' : '未连接';
+    document.getElementById('browser-health-check').textContent = 
+        data.last_health_check ? formatTimestamp(data.last_health_check * 1000) : '-';
+}
+
+// 更新Context显示
+function updateContextDisplay(data) {
+    const totalContexts = data.total_contexts || 0;
+    const creatingContexts = data.creating_contexts || 0;
+    const contexts = data.contexts || {};
+    
+    // 计算健康上下文数
+    let healthyCount = 0;
+    Object.values(contexts).forEach(ctx => {
+        if (ctx.is_healthy) healthyCount++;
+    });
+    
+    // 更新状态指示器
+    const contextStatus = totalContexts > 0 ? 'healthy' : 'degraded';
+    updateStatusIndicator('context-status-indicator', contextStatus);
+    updateCardStatus('context-card', contextStatus);
+    
+    // 更新数值
+    document.getElementById('context-total').textContent = totalContexts;
+    document.getElementById('context-creating').textContent = creatingContexts;
+    document.getElementById('context-healthy-count').textContent = healthyCount;
+    
+    // 更新上下文列表
+    updateContextList(contexts);
+}
+
+// 更新上下文列表
+function updateContextList(contexts) {
+    const listContainer = document.getElementById('context-list');
+    
+    if (Object.keys(contexts).length === 0) {
+        listContainer.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-info-circle me-2"></i>
+                暂无活跃上下文
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    Object.entries(contexts).forEach(([siteName, info]) => {
+        const statusClass = info.is_healthy ? 'healthy' : 'unhealthy';
+        html += `
+            <div class="context-item ${statusClass}">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <strong>${siteName}</strong>
+                        <span class="status-indicator ${statusClass} ms-2"></span>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">存活: ${formatDuration(info.age_seconds)}</small>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">空闲: ${formatDuration(info.idle_seconds)}</small>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">使用: ${info.usage_count}次</small>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <button class="btn btn-sm btn-outline-warning me-1" onclick="refreshContext('${siteName}')">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="closeContext('${siteName}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    listContainer.innerHTML = html;
+}
+
+// Browser操作
+async function browserAction(action) {
+    addLog(`执行Browser操作: ${action}`);
+    showLoading('browser');
+    
+    try {
+        const response = await axios.post('/api/monitor/browser/action', {
+            action: action
+        });
+        
+        if (response.data.success) {
+            showMessage(response.data.message, 'success');
+            addLog(`Browser操作成功: ${action}`);
+            await refreshBrowserStatus();
+        } else {
+            showMessage('Browser操作失败: ' + response.data.message, 'danger');
+            addLog(`Browser操作失败: ${action} - ${response.data.message}`);
+        }
+    } catch (error) {
+        console.error('Browser操作失败:', error);
+        showMessage('Browser操作失败: ' + error.message, 'danger');
+        addLog(`Browser操作异常: ${action} - ${error.message}`);
+    } finally {
+        hideLoading('browser');
+    }
+}
+
+// Context操作
+async function contextAction(action, target = null) {
+    const actionText = target ? `${action} (${target})` : action;
+    addLog(`执行Context操作: ${actionText}`);
+    showLoading('context');
+    
+    try {
+        const response = await axios.post('/api/monitor/context/action', {
+            action: action,
+            target: target
+        });
+        
+        if (response.data.success) {
+            showMessage(response.data.message, 'success');
+            addLog(`Context操作成功: ${actionText}`);
+            await refreshContextStatus();
+        } else {
+            showMessage('Context操作失败: ' + response.data.message, 'danger');
+            addLog(`Context操作失败: ${actionText} - ${response.data.message}`);
+        }
+    } catch (error) {
+        console.error('Context操作失败:', error);
+        showMessage('Context操作失败: ' + error.message, 'danger');
+        addLog(`Context操作异常: ${actionText} - ${error.message}`);
+    } finally {
+        hideLoading('context');
+    }
+}
+
+// 刷新指定上下文
+function refreshContext(siteName) {
+    contextAction('refresh', siteName);
+}
+
+// 关闭指定上下文
+function closeContext(siteName) {
+    if (confirm(`确定要关闭上下文 "${siteName}" 吗？`)) {
+        contextAction('close', siteName);
+    }
+}
+
+// 工具函数
+function showLoading(service) {
+    document.getElementById(`${service}-loading`).classList.remove('d-none');
+}
+
+function hideLoading(service) {
+    document.getElementById(`${service}-loading`).classList.add('d-none');
+}
+
+function updateStatusIndicator(elementId, status) {
+    const indicator = document.getElementById(elementId);
+    indicator.className = `status-indicator ${status}`;
+}
+
+function updateCardStatus(cardId, status) {
+    const card = document.getElementById(cardId);
+    card.className = `card status-card ${status}`;
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'healthy': '健康',
+        'unhealthy': '异常',
+        'degraded': '降级',
+        'error': '错误',
+        'not_initialized': '未初始化',
+        'disconnected': '已断开'
+    };
+    return statusMap[status] || status;
+}
+
+function formatTimestamp(timestamp) {
+    if (!timestamp) return '-';
+    const date = new Date(timestamp);
+    return date.toLocaleString('zh-CN');
+}
+
+function formatDuration(seconds) {
+    if (seconds < 60) return `${seconds}秒`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟`;
+    return `${Math.floor(seconds / 3600)}小时`;
+}
+
+function addLog(message) {
+    const timestamp = new Date().toLocaleTimeString('zh-CN');
+    operationLogs.unshift(`[${timestamp}] ${message}`);
+    
+    // 限制日志数量
+    if (operationLogs.length > 100) {
+        operationLogs = operationLogs.slice(0, 100);
+    }
+    
+    updateLogDisplay();
+}
+
+function updateLogDisplay() {
+    const logContainer = document.getElementById('operation-logs');
+    
+    if (operationLogs.length === 0) {
+        logContainer.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-info-circle me-2"></i>
+                暂无操作记录
+            </div>
+        `;
+        return;
+    }
+    
+    const html = operationLogs.map(log => `
+        <div class="border-bottom pb-2 mb-2">
+            <small class="text-muted">${log}</small>
+        </div>
+    `).join('');
+    
+    logContainer.innerHTML = html;
+}
+
+function clearLogs() {
+    operationLogs = [];
+    updateLogDisplay();
+    showMessage('操作日志已清空', 'info');
+}
+
+function showMessage(message, type) {
+    // 这里可以使用现有的消息显示函数
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    
+    // 简单的toast提示
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}

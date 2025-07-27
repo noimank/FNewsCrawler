@@ -67,13 +67,13 @@ class IwencaiLogin(QRLoginBase):
             await self.login_page.locator("text=注册 / 登录").click()
 
             # print("等待登录弹窗容器可见...")
-            await self.login_page.locator(".login-window-wrap").wait_for(state="visible", timeout=10000)
+            await self.login_page.locator(".login-window-wrap").wait_for(state="visible")
             # print("登录弹窗容器已可见。")
 
             # 3. 正确获取 iframe 元素并切换到 iframe 上下文
             # print("定位并切换到登录 iframe...")
             # 等待 iframe 加载完成
-            await self.login_page.wait_for_selector("#login_iframe", state="visible", timeout=10000)
+            await self.login_page.wait_for_selector("#login_iframe", state="visible")
 
             # 获取 iframe 句柄
             frame = self.login_page.frame_locator("#login_iframe")
@@ -82,7 +82,7 @@ class IwencaiLogin(QRLoginBase):
             wechat_login_button = frame.locator(".btn_elem[l_type=weixin]")
 
             # 等待按钮可点击
-            await wechat_login_button.wait_for(state="visible", timeout=10000)
+            await wechat_login_button.wait_for(state="visible")
 
             # 5. 设置弹窗监听并点击微信登录
             async with self.login_page.expect_popup() as popup_info:
@@ -93,7 +93,7 @@ class IwencaiLogin(QRLoginBase):
             # print("正在等待微信登录弹窗出现...")
             self.popup_page = await popup_info.value  # 保存弹窗引用
             # 等待弹窗页面完全加载
-            await self.popup_page.wait_for_load_state("networkidle")
+            await self.popup_page.wait_for_load_state("domcontentloaded")
             # print("微信登录弹窗已加载。")
 
             # 7. 获取二维码图片URL
@@ -157,7 +157,7 @@ class IwencaiLogin(QRLoginBase):
             # print("正在等待QQ登录弹窗出现...")
             self.popup_page = await popup_info.value  # 保存弹窗引用
             # 等待弹窗页面完全加载
-            await self.popup_page.wait_for_load_state("networkidle")
+            await self.popup_page.wait_for_load_state("domcontentloaded")
             # print("QQ登录弹窗已加载。")
 
             #获取弹窗的内部iframe
@@ -204,13 +204,13 @@ class IwencaiLogin(QRLoginBase):
 
             # 2. 等待包含 iframe 的容器变得可见
             # print("等待登录弹窗容器可见...")
-            await self.login_page.locator(".login-window-wrap").wait_for(state="visible", timeout=10000)
+            await self.login_page.locator(".login-window-wrap").wait_for(state="visible")
 #             print("登录弹窗容器已可见。")
 
             # 3. 正确获取 iframe 元素并切换到 iframe 上下文
             # print("定位并切换到登录 iframe...")
             # 等待 iframe 加载完成
-            await self.login_page.wait_for_selector("#login_iframe", state="visible", timeout=10000)
+            await self.login_page.wait_for_selector("#login_iframe", state="visible")
 
             # 获取 iframe 句柄
             frame = self.login_page.frame_locator("#login_iframe")
@@ -219,7 +219,7 @@ class IwencaiLogin(QRLoginBase):
             qr_login_button = frame.locator("#to_qrcode_login")
 
             # 等待按钮可点击
-            await qr_login_button.wait_for(state="visible", timeout=10000)
+            await qr_login_button.wait_for(state="visible")
 
             # 5. 设置弹窗监听并点击同花顺登录
             await qr_login_button.click()
@@ -227,7 +227,7 @@ class IwencaiLogin(QRLoginBase):
 
             # 7. 获取二维码图片URL
             qr_code_selector = ".code-box img"
-            await frame.locator(qr_code_selector).wait_for(state="visible", timeout=5000)
+            await frame.locator(qr_code_selector).wait_for(state="visible")
             qr_code_url = await frame.locator(qr_code_selector).first.get_attribute("src")
             if qr_code_url.startswith("/"):
                 qr_code_url = "https://upass.iwencai.com" + qr_code_url
@@ -285,7 +285,7 @@ class IwencaiLogin(QRLoginBase):
             temp_page = await context.new_page()
             await temp_page.goto(self.base_url)
             await temp_page.wait_for_load_state("domcontentloaded")
-            await temp_page.wait_for_selector(".login-box .user-photo", state="visible", timeout=3000)
+            await temp_page.wait_for_selector(".login-box .user-photo", state="visible", timeout=600)
             return True
         except Exception as e:
             LOGGER.error(f"获取登录状态失败: {e}")

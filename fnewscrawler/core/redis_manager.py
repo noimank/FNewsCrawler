@@ -324,26 +324,3 @@ def get_cached_news_content(url: str) -> Optional[dict]:
     key = f"news:content:{url}"
     return redis_manager.get(key)
 
-async def cache_context_state(platform: str, context) -> bool:
-    """缓存上下文状态"""
-    key = f"platform:context:{platform}"
-    # 由于playwright的context对象无法直接序列化，需要先调用storage_state()获取状态
-    try:
-        context_state = await context.storage_state()
-        return redis_manager.set(key, context_state, serializer='json')
-    except Exception as e:
-        LOGGER.error(f"缓存context状态失败: {e}")
-        return False
-
-async def get_cached_context_state(platform: str) -> Optional[dict]:
-    """获取缓存的上下文状态"""
-    key = f"platform:context:{platform}"
-    # 获取context的storage state数据
-    return redis_manager.get(key, serializer='json')
-
-
-async def delete_cached_context_state(platform: str) -> int:
-    """获取缓存的上下文状态"""
-    key = f"platform:context:{platform}"
-    # 获取context的storage state数据
-    return redis_manager.delete(key)

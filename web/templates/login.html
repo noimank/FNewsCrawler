@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-sign-in-alt me-2"></i>
+            登录管理
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 登录状态 -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    登录状态
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="login-status-content">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">检查中...</span>
+                        </div>
+                        <p class="mt-2 text-muted">正在检查登录状态...</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-primary" onclick="checkLoginStatus()">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        刷新状态
+                    </button>
+                    <button class="btn btn-warning" onclick="clearLoginCache()">
+                        <i class="fas fa-trash me-1"></i>
+                        清除缓存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 二维码登录 -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-qrcode me-2"></i>
+                    二维码扫码登录
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="qr-login-content">
+                    <!-- 登录配置 -->
+                    <div id="login-config">
+                        <div class="mb-3">
+                            <label for="platform-select" class="form-label">选择平台</label>
+                            <select class="form-select" id="platform-select" onchange="loadQRTypes()">
+                                <option value="iwencai">问财</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="qr-type-select" class="form-label">登录方式</label>
+                            <select class="form-select" id="qr-type-select" onchange="updateLoginButton()">
+                                <option value="">请先选择平台</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="timeout-range" class="form-label">超时时间: <span id="timeout-value">120</span> 秒</label>
+                            <input type="range" class="form-range" id="timeout-range" min="60" max="300" value="120" 
+                                   oninput="document.getElementById('timeout-value').textContent = this.value">
+                        </div>
+                        
+                        <button class="btn btn-success btn-lg w-100" id="start-login-btn" onclick="startQRLogin()" disabled>
+                            <i class="fas fa-play me-2"></i>
+                            <span id="login-btn-text">请选择登录方式</span>
+                        </button>
+                    </div>
+                    
+                    <!-- 二维码显示 -->
+                    <div id="qr-display" class="d-none">
+                        <div class="text-center">
+                            <div id="qr-image-container" class="mb-3">
+                                <!-- 二维码图片将在这里显示 -->
+                            </div>
+                            
+                            <div class="progress mb-3">
+                                <div id="qr-progress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                            
+                            <p id="qr-status-text" class="text-muted">等待扫描二维码...</p>
+                            
+                            <button class="btn btn-danger" onclick="cancelQRLogin()">
+                                <i class="fas fa-times me-1"></i>
+                                取消登录
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 活跃登录任务 -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    活跃登录任务
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshTasks()">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    刷新
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="tasks-content">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2 text-muted">正在加载任务列表...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentTaskId = null;
+let statusCheckInterval = null;
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    checkLoginStatus();
+    refreshTasks();
+    loadQRTypes(); // 加载默认平台的登录方式
+});
+
+// 加载支持的登录方式
+async function loadQRTypes() {
+    try {
+        const platform = document.getElementById('platform-select').value;
+        if (!platform) return;
+        
+        const response = await axios.get(`/api/login/qr-types/${platform}`);
+        
+        if (response.data.success) {
+            const qrTypes = response.data.data.qr_types;
+            const qrTypeSelect = document.getElementById('qr-type-select');
+            
+            // 清空现有选项
+            qrTypeSelect.innerHTML = '<option value="">请选择登录方式</option>';
+            
+            // 添加支持的登录方式
+            qrTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                qrTypeSelect.appendChild(option);
+            });
+            
+            // 如果只有一种登录方式，自动选择
+            if (qrTypes.length === 1) {
+                qrTypeSelect.value = qrTypes[0];
+                updateLoginButton();
+            }
+        }
+    } catch (error) {
+        console.error('加载登录方式失败:', error);
+        showMessage('加载登录方式失败: ' + error.message, 'danger');
+    }
+}
+
+// 更新登录按钮状态
+function updateLoginButton() {
+    const qrType = document.getElementById('qr-type-select').value;
+    const loginBtn = document.getElementById('start-login-btn');
+    const loginBtnText = document.getElementById('login-btn-text');
+    
+    if (qrType) {
+        loginBtn.disabled = false;
+        loginBtn.className = 'btn btn-success btn-lg w-100';
+        loginBtnText.textContent = `开始${qrType}扫码登录`;
+    } else {
+        loginBtn.disabled = true;
+        loginBtn.className = 'btn btn-secondary btn-lg w-100';
+        loginBtnText.textContent = '请选择登录方式';
+    }
+}
+
+// 检查登录状态
+async function checkLoginStatus() {
+    try {
+        const response = await axios.get('/api/login/platform-status/iwencai');
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            const isLoggedIn = data.is_logged_in;
+            
+            let statusHtml = '';
+            if (isLoggedIn) {
+                statusHtml = `
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>已登录</strong>
+                        <hr>
+                        <small class="text-muted">检查时间: ${new Date(data.check_time).toLocaleString()}</small>
+                    </div>
+                `;
+            } else {
+                statusHtml = `
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>未登录</strong>
+                        <hr>
+                        <small class="text-muted">检查时间: ${new Date(data.check_time).toLocaleString()}</small>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('login-status-content').innerHTML = statusHtml;
+        }
+    } catch (error) {
+        document.getElementById('login-status-content').innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-times-circle me-2"></i>
+                <strong>检查失败</strong>
+                <hr>
+                <small>${error.message}</small>
+            </div>
+        `;
+    }
+}
+
+// 清除登录缓存
+async function clearLoginCache() {
+    try {
+        showMessage('正在清除登录缓存...', 'info');
+        const response = await axios.delete('/api/login/cache/iwencai');
+        
+        if (response.data.success) {
+            showMessage('登录缓存已清除', 'success');
+            checkLoginStatus(); // 重新检查状态
+        } else {
+            showMessage('清除登录缓存失败', 'danger');
+        }
+    } catch (error) {
+        showMessage('清除登录缓存失败: ' + error.message, 'danger');
+    }
+}
+
+// 开始二维码登录
+async function startQRLogin() {
+    try {
+        const platform = document.getElementById('platform-select').value;
+        const qrType = document.getElementById('qr-type-select').value;
+        const timeout = parseInt(document.getElementById('timeout-range').value);
+        
+        if (!qrType) {
+            showMessage('请先选择登录方式', 'warning');
+            return;
+        }
+        
+        showMessage('正在生成二维码...', 'info');
+        
+        const response = await axios.post('/api/login/qr/start', {
+            platform: platform,
+            qr_type: qrType,
+            timeout: timeout
+        });
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            
+            if (data.status === 'logged_in') {
+                showMessage('已经登录', 'success');
+                checkLoginStatus();
+                return;
+            }
+            
+            currentTaskId = data.task_id;
+            
+            // 显示二维码
+            document.getElementById('login-config').classList.add('d-none');
+            document.getElementById('qr-display').classList.remove('d-none');
+            
+            // 设置二维码图片
+            document.getElementById('qr-image-container').innerHTML = `
+                <img src="${data.qr_url}" alt="${qrType}登录二维码" class="img-fluid" style="max-width: 300px;">
+            `;
+            
+            // 开始状态检查
+            startStatusCheck(data.timeout);
+            
+            showMessage(`二维码已生成，请使用${qrType}扫描`, 'success');
+        } else {
+            showMessage('生成二维码失败: ' + response.data.message, 'danger');
+        }
+    } catch (error) {
+        showMessage('生成二维码失败: ' + error.message, 'danger');
+    }
+}
+
+// 开始状态检查
+function startStatusCheck(timeout) {
+    let elapsed = 0;
+    const interval = 2000; // 2秒检查一次
+    
+    statusCheckInterval = setInterval(async () => {
+        elapsed += interval;
+        const remaining = Math.max(0, timeout - elapsed / 1000);
+        const progress = Math.min(100, (elapsed / 1000) / timeout * 100);
+        
+        // 更新进度条
+        document.getElementById('qr-progress').style.width = progress + '%';
+        document.getElementById('qr-status-text').textContent = `等待扫描二维码 (剩余 ${Math.floor(remaining)} 秒)`;
+        
+        if (remaining <= 0) {
+            // 超时
+            clearInterval(statusCheckInterval);
+            showMessage('登录超时', 'warning');
+            resetQRLogin();
+            return;
+        }
+        
+        try {
+            // 检查登录状态
+            const response = await axios.get(`/api/login/qr/status/${currentTaskId}`);
+            
+            if (response.data.success) {
+                const data = response.data.data;
+                
+                if (data.status === 'success') {
+                    // 登录成功
+                    clearInterval(statusCheckInterval);
+                    showMessage('登录成功！', 'success');
+                    resetQRLogin();
+                    checkLoginStatus();
+                    refreshTasks();
+                } else if (data.status === 'timeout') {
+                    // 超时
+                    clearInterval(statusCheckInterval);
+                    showMessage('登录超时', 'warning');
+                    resetQRLogin();
+                }
+            }
+        } catch (error) {
+            console.error('检查登录状态失败:', error);
+            // 如果是404错误（任务不存在），停止状态检查
+            if (error.response && error.response.status === 404) {
+                clearInterval(statusCheckInterval);
+                showMessage('登录任务已过期或不存在', 'warning');
+                resetQRLogin();
+            }
+        }
+    }, interval);
+}
+
+// 取消二维码登录
+async function cancelQRLogin() {
+    if (!currentTaskId) return;
+    
+    try {
+        await axios.delete(`/api/login/qr/cancel/${currentTaskId}`);
+        showMessage('登录已取消', 'info');
+    } catch (error) {
+        showMessage('取消登录失败: ' + error.message, 'danger');
+    }
+    
+    resetQRLogin();
+}
+
+// 重置二维码登录界面
+function resetQRLogin() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+        statusCheckInterval = null;
+    }
+    
+    currentTaskId = null;
+    
+    document.getElementById('qr-display').classList.add('d-none');
+    document.getElementById('login-config').classList.remove('d-none');
+    
+    // 重置进度条
+    document.getElementById('qr-progress').style.width = '0%';
+}
+
+// 刷新任务列表
+async function refreshTasks() {
+    try {
+        const response = await axios.get('/api/login/active-tasks');
+        
+        if (response.data.success) {
+            const tasks = response.data.data.tasks;
+            
+            let tasksHtml = '';
+            if (tasks.length === 0) {
+                tasksHtml = `
+                    <div class="text-center py-3 text-muted">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p>暂无活跃的登录任务</p>
+                    </div>
+                `;
+            } else {
+                tasksHtml = '<div class="table-responsive"><table class="table table-striped">';
+                tasksHtml += `
+                    <thead>
+                        <tr>
+                            <th>任务ID</th>
+                            <th>平台</th>
+                            <th>状态</th>
+                            <th>剩余时间</th>
+                            <th>已用时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+                
+                tasks.forEach(task => {
+                    tasksHtml += `
+                        <tr>
+                            <td><code>${task.task_id.substring(0, 8)}...</code></td>
+                            <td><span class="badge bg-primary">${task.platform}</span></td>
+                            <td><span class="badge bg-warning">${task.status}</span></td>
+                            <td>${task.remaining_time}秒</td>
+                            <td>${task.elapsed_time}秒</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" onclick="cancelTask('${task.task_id}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tasksHtml += '</tbody></table></div>';
+            }
+            
+            document.getElementById('tasks-content').innerHTML = tasksHtml;
+        }
+    } catch (error) {
+        document.getElementById('tasks-content').innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-times-circle me-2"></i>
+                获取任务列表失败: ${error.message}
+            </div>
+        `;
+    }
+}
+
+// 取消任务
+async function cancelTask(taskId) {
+    try {
+        await axios.delete(`/api/login/qr/cancel/${taskId}`);
+        showMessage('任务已取消', 'info');
+        refreshTasks();
+    } catch (error) {
+        showMessage('取消任务失败: ' + error.message, 'danger');
+    }
+}
+</script>
+{% endblock %}

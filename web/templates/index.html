@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- 欢迎横幅 -->
+        <div class="jumbotron bg-gradient-primary text-white rounded p-5 mb-4">
+            <div class="container text-center">
+                <h1 class="display-4">
+                    <i class="fas fa-newspaper me-3"></i>
+                    FNewsCrawler
+                </h1>
+                <p class="lead">新闻爬虫管理平台</p>
+                <p class="mb-4">支持多平台新闻爬取和智能登录管理</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/login" class="btn btn-light btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        登录管理
+                    </a>
+                    <a href="/crawler" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-spider me-2"></i>
+                        开始爬取
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 功能特性 -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-qrcode fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">二维码登录</h5>
+                <p class="card-text">支持微信扫码登录，安全便捷的身份验证方式</p>
+                <a href="/login" class="btn btn-primary">
+                    <i class="fas fa-arrow-right me-1"></i>
+                    立即体验
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-robot fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">智能爬取</h5>
+                <p class="card-text">自动化新闻内容抓取，支持多种输出格式</p>
+                <a href="/crawler" class="btn btn-success">
+                    <i class="fas fa-arrow-right me-1"></i>
+                    开始爬取
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-cogs fa-3x text-info"></i>
+                </div>
+                <h5 class="card-title">API接口</h5>
+                <p class="card-text">完整的RESTful API，支持程序化调用</p>
+                <a href="/docs" target="_blank" class="btn btn-info">
+                    <i class="fas fa-external-link-alt me-1"></i>
+                    查看文档
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <!-- 系统状态 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    系统状态
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-1" id="active-tasks">-</h4>
+                            <small class="text-muted">活跃任务</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-success mb-1" id="completed-tasks">-</h4>
+                            <small class="text-muted">已完成</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-warning mb-1" id="login-sessions">-</h4>
+                            <small class="text-muted">登录会话</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-info">
+                            <h4 class="mb-1" id="system-status">
+                                <i class="fas fa-circle text-success"></i>
+                            </h4>
+                            <small class="text-muted">系统状态</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <!-- 快速操作 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    快速操作
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>登录管理</h6>
+                        <div class="d-flex gap-2 mb-3">
+                            <button class="btn btn-sm btn-outline-primary" onclick="checkLoginStatus()">
+                                <i class="fas fa-check-circle me-1"></i>
+                                检查登录状态
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="clearLoginCache()">
+                                <i class="fas fa-trash me-1"></i>
+                                清除缓存
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>爬虫管理</h6>
+                        <div class="d-flex gap-2 mb-3">
+                            <button class="btn btn-sm btn-outline-success" onclick="viewActiveTasks()">
+                                <i class="fas fa-list me-1"></i>
+                                查看任务
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="testCrawl()">
+                                <i class="fas fa-play me-1"></i>
+                                测试爬取
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// 页面加载时获取系统状态
+document.addEventListener('DOMContentLoaded', function() {
+    loadSystemStatus();
+    // 每30秒刷新一次状态
+    setInterval(loadSystemStatus, 30000);
+});
+
+// 加载系统状态
+async function loadSystemStatus() {
+    try {
+        // 获取爬虫任务状态
+        const crawlerResponse = await axios.get('/api/crawler/tasks');
+        if (crawlerResponse.data.success) {
+            const tasks = crawlerResponse.data.data.tasks;
+            const activeTasks = tasks.filter(t => t.status === 'running').length;
+            const completedTasks = tasks.filter(t => t.status === 'completed').length;
+            
+            document.getElementById('active-tasks').textContent = activeTasks;
+            document.getElementById('completed-tasks').textContent = completedTasks;
+        }
+        
+        // 获取登录任务状态
+        const loginResponse = await axios.get('/api/login/active-tasks');
+        if (loginResponse.data.success) {
+            const loginTasks = loginResponse.data.data.tasks.length;
+            document.getElementById('login-sessions').textContent = loginTasks;
+        }
+        
+    } catch (error) {
+        console.error('获取系统状态失败:', error);
+    }
+}
+
+// 检查登录状态
+async function checkLoginStatus() {
+    try {
+        showMessage('正在检查登录状态...', 'info');
+        const response = await axios.get('/api/login/platform-status/iwencai');
+        
+        if (response.data.success) {
+            const isLoggedIn = response.data.data.is_logged_in;
+            if (isLoggedIn) {
+                showMessage('当前已登录', 'success');
+            } else {
+                showMessage('当前未登录', 'warning');
+            }
+        }
+    } catch (error) {
+        showMessage('检查登录状态失败: ' + error.message, 'danger');
+    }
+}
+
+// 清除登录缓存
+async function clearLoginCache() {
+    try {
+        showMessage('正在清除登录缓存...', 'info');
+        const response = await axios.delete('/api/login/cache/iwencai');
+        
+        if (response.data.success) {
+            showMessage('登录缓存已清除', 'success');
+        } else {
+            showMessage('清除登录缓存失败', 'danger');
+        }
+    } catch (error) {
+        showMessage('清除登录缓存失败: ' + error.message, 'danger');
+    }
+}
+
+// 查看活跃任务
+function viewActiveTasks() {
+    window.location.href = '/crawler#tasks';
+}
+
+// 测试爬取
+function testCrawl() {
+    window.location.href = '/crawler#test';
+}
+</script>
+{% endblock %}

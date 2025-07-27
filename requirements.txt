@@ -1,0 +1,11 @@
+playwright
+httpx
+loguru 
+crawl4ai
+redis
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+aiofiles
+

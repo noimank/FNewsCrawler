@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
 
 
 # 创建MCP服务器的ASGI应用
-mcp_app = mcp_server.http_app(path='/mcp')
+mcp_app = mcp_server.http_app(path='/mcp-http')
 
 # 创建FastAPI应用实例，集成MCP生命周期
 @asynccontextmanager

@@ -8,9 +8,11 @@
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import asyncio
-from datetime import datetime
+import os
+import re
+from datetime import datetime, timedelta
 
 from fnewscrawler.core.browser import BrowserManager
 from fnewscrawler.core.context import context_manager
@@ -378,3 +380,130 @@ async def health_check():
             "timestamp": datetime.now().isoformat(),
             "error": str(e)
         }
+
+@router.get("/logs")
+async def get_system_logs(lines: int = 100, days: Optional[int] = None, level: Optional[str] = None):
+    """获取系统日志"""
+    try:
+        # 获取日志文件路径
+        log_path = os.environ.get("LOG_FILE_PATH", os.path.expanduser("~/FNewsCrawler.log"))
+        
+        if not os.path.exists(log_path):
+            return ServiceStatusResponse(
+                success=False,
+                message="日志文件不存在",
+                data={
+                    "log_path": log_path,
+                    "logs": [],
+                    "timestamp": datetime.now().isoformat()
+                }
+            )
+        
+        # 读取日志文件
+        with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+            all_lines = f.readlines()
+        
+        # 处理日志行，移除换行符
+        log_entries = [line.strip() for line in all_lines if line.strip()]
+        
+        # 按日志级别筛选
+        if level and level.upper() != "ALL":
+            level_filtered_logs = []
+            for log_line in log_entries:
+                log_level = extract_log_level(log_line)
+                if log_level and log_level.upper() == level.upper():
+                    level_filtered_logs.append(log_line)
+            log_entries = level_filtered_logs
+        
+        # 如果指定了天数，按日期筛选
+        if days is not None and days > 0:
+            cutoff_date = datetime.now() - timedelta(days=days)
+            filtered_logs = []
+            
+            for log_line in log_entries:
+                # 尝试从日志行中提取日期时间
+                log_datetime = extract_log_datetime(log_line)
+                if log_datetime and log_datetime >= cutoff_date:
+                    filtered_logs.append(log_line)
+            
+            log_entries = filtered_logs
+        
+        # 如果没有按日期筛选，则按行数限制
+        elif lines > 0:
+            log_entries = log_entries[-lines:] if len(log_entries) > lines else log_entries
+        
+        filter_info = ""
+        filter_parts = []
+        
+        if level and level.upper() != "ALL":
+            filter_parts.append(f"{level.upper()}级别")
+        
+        if days is not None and days > 0:
+            filter_parts.append(f"最近{days}天")
+        else:
+            filter_parts.append(f"最近{lines}行")
+        
+        filter_info = f"（{' + '.join(filter_parts)}）" if filter_parts else ""
+        
+        return ServiceStatusResponse(
+            success=True,
+            message=f"获取系统日志成功{filter_info}，共 {len(log_entries)} 条记录",
+            data={
+                "log_path": log_path,
+                "logs": log_entries,
+                "total_lines": len(log_entries),
+                "filter_type": "days" if days is not None else "lines",
+                "filter_value": days if days is not None else lines,
+                "filter_level": level if level else "ALL",
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+        
+    except Exception as e:
+        LOGGER.error(f"获取系统日志失败: {e}")
+        return ServiceStatusResponse(
+            success=False,
+            message=f"获取系统日志失败: {str(e)}",
+            data={
+                "logs": [],
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+
+def extract_log_datetime(log_line: str) -> Optional[datetime]:
+    """从日志行中提取日期时间"""
+    try:
+        # 匹配常见的日志时间格式：2025-07-27 11:57:57.875
+        pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})(?:\.\d+)?'
+        match = re.search(pattern, log_line)
+        
+        if match:
+            datetime_str = match.group(1)
+            return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+        
+        return None
+        
+    except Exception:
+        return None
+
+def extract_log_level(log_line: str) -> Optional[str]:
+    """从日志行中提取日志级别"""
+    try:
+        # 匹配常见的日志级别格式：| INFO |, | ERROR |, | WARNING |, | DEBUG |
+        pattern = r'\|\s*(DEBUG|INFO|WARNING|ERROR|CRITICAL)\s*\|'
+        match = re.search(pattern, log_line, re.IGNORECASE)
+        
+        if match:
+            return match.group(1).upper()
+        
+        # 备用匹配：直接匹配级别关键词
+        level_pattern = r'\b(DEBUG|INFO|WARNING|ERROR|CRITICAL)\b'
+        level_match = re.search(level_pattern, log_line, re.IGNORECASE)
+        
+        if level_match:
+            return level_match.group(1).upper()
+        
+        return None
+        
+    except Exception:
+        return None

@@ -305,25 +305,57 @@
     </div>
 </div>
 
-<!-- 操作日志 -->
+<!-- 系统日志 -->
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
-                    <i class="fas fa-history me-2"></i>
-                    操作日志
+                    <i class="fas fa-file-alt me-2"></i>
+                    系统日志
                 </h5>
-                <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
-                    <i class="fas fa-trash me-1"></i>清空日志
-                </button>
+                <div>
+                    <select class="form-select form-select-sm d-inline-block me-2" id="logFilterType" style="width: auto;">
+                        <option value="lines">按行数</option>
+                        <option value="days">按日期</option>
+                    </select>
+                    <select class="form-select form-select-sm d-inline-block me-2" id="logLines" style="width: auto;">
+                        <option value="50">最近50行</option>
+                        <option value="100" selected>最近100行</option>
+                        <option value="200">最近200行</option>
+                        <option value="500">最近500行</option>
+                    </select>
+                    <select class="form-select form-select-sm d-inline-block me-2 d-none" id="logDays" style="width: auto;">
+                        <option value="1">最近1天</option>
+                        <option value="3">最近3天</option>
+                        <option value="7" selected>最近7天</option>
+                        <option value="15">最近15天</option>
+                        <option value="30">最近30天</option>
+                    </select>
+                    <select class="form-select form-select-sm d-inline-block me-2" id="logLevel" style="width: auto;">
+                        <option value="ALL" selected>所有级别</option>
+                        <option value="INFO">INFO</option>
+                        <option value="WARNING">WARNING</option>
+                        <option value="ERROR">ERROR</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshSystemLogs()">
+                        <i class="fas fa-sync-alt me-1"></i>刷新日志
+                    </button>
+                </div>
             </div>
             <div class="card-body">
-                <div id="operation-logs" style="max-height: 300px; overflow-y: auto;">
+                <div id="system-logs" style="max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.875rem; background-color: #f8f9fa; padding: 10px; border-radius: 4px;">
                     <div class="text-center text-muted py-3">
                         <i class="fas fa-info-circle me-2"></i>
-                        暂无操作记录
+                        正在加载系统日志...
                     </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        日志路径: <span id="log-path">-</span> | 
+                        筛选条件: <span id="log-filter-info">-</span> | 
+                        最后更新: <span id="log-timestamp">-</span>
+                    </small>
                 </div>
             </div>
         </div>
@@ -334,11 +366,11 @@
 {% block extra_scripts %}
 <script>
 let autoRefreshInterval = null;
-let operationLogs = [];
 
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
     refreshAll();
+    refreshSystemLogs();
     startAutoRefresh();
     
     // 自动刷新开关
@@ -348,6 +380,38 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             stopAutoRefresh();
         }
+    });
+    
+    // 日志行数选择变化时刷新日志
+    document.getElementById('logLines').addEventListener('change', function() {
+        refreshSystemLogs();
+    });
+    
+    // 日志天数选择变化时刷新日志
+    document.getElementById('logDays').addEventListener('change', function() {
+        refreshSystemLogs();
+    });
+    
+    // 日志级别选择变化时刷新日志
+    document.getElementById('logLevel').addEventListener('change', function() {
+        refreshSystemLogs();
+    });
+    
+    // 日志筛选类型变化时切换显示
+    document.getElementById('logFilterType').addEventListener('change', function() {
+        const filterType = this.value;
+        const linesSelect = document.getElementById('logLines');
+        const daysSelect = document.getElementById('logDays');
+        
+        if (filterType === 'days') {
+            linesSelect.classList.add('d-none');
+            daysSelect.classList.remove('d-none');
+        } else {
+            linesSelect.classList.remove('d-none');
+            daysSelect.classList.add('d-none');
+        }
+        
+        refreshSystemLogs();
     });
 });
 
@@ -370,7 +434,8 @@ async function refreshAll() {
     await Promise.all([
         refreshOverview(),
         refreshBrowserStatus(),
-        refreshContextStatus()
+        refreshContextStatus(),
+        refreshSystemLogs()
     ]);
 }
 
@@ -544,7 +609,6 @@ function updateContextList(contexts) {
 
 // Browser操作
 async function browserAction(action) {
-    addLog(`执行Browser操作: ${action}`);
     showLoading('browser');
     
     try {
@@ -554,16 +618,13 @@ async function browserAction(action) {
         
         if (response.data.success) {
             showMessage(response.data.message, 'success');
-            addLog(`Browser操作成功: ${action}`);
             await refreshBrowserStatus();
         } else {
             showMessage('Browser操作失败: ' + response.data.message, 'danger');
-            addLog(`Browser操作失败: ${action} - ${response.data.message}`);
         }
     } catch (error) {
         console.error('Browser操作失败:', error);
         showMessage('Browser操作失败: ' + error.message, 'danger');
-        addLog(`Browser操作异常: ${action} - ${error.message}`);
     } finally {
         hideLoading('browser');
     }
@@ -571,8 +632,6 @@ async function browserAction(action) {
 
 // Context操作
 async function contextAction(action, target = null) {
-    const actionText = target ? `${action} (${target})` : action;
-    addLog(`执行Context操作: ${actionText}`);
     showLoading('context');
     
     try {
@@ -583,16 +642,13 @@ async function contextAction(action, target = null) {
         
         if (response.data.success) {
             showMessage(response.data.message, 'success');
-            addLog(`Context操作成功: ${actionText}`);
             await refreshContextStatus();
         } else {
             showMessage('Context操作失败: ' + response.data.message, 'danger');
-            addLog(`Context操作失败: ${actionText} - ${response.data.message}`);
         }
     } catch (error) {
         console.error('Context操作失败:', error);
         showMessage('Context操作失败: ' + error.message, 'danger');
-        addLog(`Context操作异常: ${actionText} - ${error.message}`);
     } finally {
         hideLoading('context');
     }
@@ -653,44 +709,166 @@ function formatDuration(seconds) {
     return `${Math.floor(seconds / 3600)}小时`;
 }
 
-function addLog(message) {
-    const timestamp = new Date().toLocaleTimeString('zh-CN');
-    operationLogs.unshift(`[${timestamp}] ${message}`);
-    
-    // 限制日志数量
-    if (operationLogs.length > 100) {
-        operationLogs = operationLogs.slice(0, 100);
+// 刷新系统日志
+async function refreshSystemLogs() {
+    try {
+        const filterType = document.getElementById('logFilterType').value;
+        const level = document.getElementById('logLevel').value;
+        let url = '/api/monitor/logs';
+        let params = [];
+        
+        if (filterType === 'days') {
+            const days = document.getElementById('logDays').value;
+            params.push(`days=${days}`);
+        } else {
+            const lines = document.getElementById('logLines').value;
+            params.push(`lines=${lines}`);
+        }
+        
+        if (level && level !== 'ALL') {
+            params.push(`level=${level}`);
+        }
+        
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+        
+        const response = await axios.get(url);
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            updateSystemLogsDisplay(data);
+        } else {
+            showSystemLogsError(response.data.message);
+        }
+    } catch (error) {
+        console.error('获取系统日志失败:', error);
+        showSystemLogsError('获取系统日志失败: ' + error.message);
     }
-    
-    updateLogDisplay();
 }
 
-function updateLogDisplay() {
-    const logContainer = document.getElementById('operation-logs');
+// 更新系统日志显示
+function updateSystemLogsDisplay(data) {
+    const logContainer = document.getElementById('system-logs');
+    const logPath = document.getElementById('log-path');
+    const logFilterInfo = document.getElementById('log-filter-info');
+    const logTimestamp = document.getElementById('log-timestamp');
     
-    if (operationLogs.length === 0) {
+    // 更新日志路径和时间戳
+    logPath.textContent = data.log_path || '-';
+    logTimestamp.textContent = formatTimestamp(data.timestamp);
+    
+    // 更新筛选信息
+    let filterParts = [];
+    
+    if (data.filter_level && data.filter_level !== 'ALL') {
+        filterParts.push(`${data.filter_level}级别`);
+    }
+    
+    if (data.filter_type === 'days') {
+        filterParts.push(`最近${data.filter_value}天`);
+    } else {
+        filterParts.push(`最近${data.filter_value}行`);
+    }
+    
+    logFilterInfo.textContent = filterParts.join(' + ');
+    
+    if (!data.logs || data.logs.length === 0) {
         logContainer.innerHTML = `
             <div class="text-center text-muted py-3">
                 <i class="fas fa-info-circle me-2"></i>
-                暂无操作记录
+                暂无日志记录
             </div>
         `;
         return;
     }
     
-    const html = operationLogs.map(log => `
-        <div class="border-bottom pb-2 mb-2">
-            <small class="text-muted">${log}</small>
-        </div>
-    `).join('');
+    // 处理日志行，添加颜色标识
+    const html = data.logs.map(log => {
+        let className = '';
+        if (log.includes('ERROR') || log.includes('error')) {
+            className = 'text-danger';
+        } else if (log.includes('WARNING') || log.includes('warning')) {
+            className = 'text-warning';
+        } else if (log.includes('INFO') || log.includes('info')) {
+            className = 'text-info';
+        }
+        
+        return `<div class="${className} mb-1" style="word-break: break-all;">${escapeHtml(log)}</div>`;
+    }).join('');
     
     logContainer.innerHTML = html;
+    
+    // 滚动到底部显示最新日志
+    logContainer.scrollTop = logContainer.scrollHeight;
 }
 
-function clearLogs() {
-    operationLogs = [];
-    updateLogDisplay();
-    showMessage('操作日志已清空', 'info');
+// 更新上下文列表
+function updateContextList(contexts) {
+    const listContainer = document.getElementById('context-list');
+    
+    if (Object.keys(contexts).length === 0) {
+        listContainer.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-info-circle me-2"></i>
+                暂无活跃上下文
+            </div>
+        `;
+        return;
+    }
+    
+    // 构建上下文列表HTML
+    let html = '';
+    Object.entries(contexts).forEach(([id, ctx]) => {
+        const status = ctx.is_healthy ? 'healthy' : 'unhealthy';
+        const statusText = ctx.is_healthy ? '健康' : '异常';
+        const createdTime = formatTimestamp(ctx.created_time * 1000);
+        const lastUsedTime = formatTimestamp(ctx.last_used_time * 1000);
+        
+        html += `
+            <div class="context-item ${status} mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">
+                            <span class="status-indicator ${status}"></span>
+                            Context ID: ${escapeHtml(id)}
+                        </h6>
+                        <div class="small text-muted">
+                            状态: ${statusText} | 
+                            创建时间: ${createdTime} | 
+                            最后使用: ${lastUsedTime}
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-danger" 
+                                onclick="contextAction('close', '${id}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    listContainer.innerHTML = html;
+}
+
+// 显示系统日志错误
+function showSystemLogsError(message) {
+    const logContainer = document.getElementById('system-logs');
+    logContainer.innerHTML = `
+        <div class="text-center text-danger py-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${escapeHtml(message)}
+        </div>
+    `;
+}
+
+// HTML转义函数
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function showMessage(message, type) {

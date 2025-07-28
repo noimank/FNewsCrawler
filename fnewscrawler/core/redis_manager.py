@@ -291,7 +291,25 @@ class RedisManager:
         except Exception as e:
             self.logger.error(f"Redis decr操作失败 {key}: {e}")
             return 0
-    
+
+    def scan_iter(self, match: str = '*') -> list:
+        """
+        迭代扫描匹配的键。
+
+        参数:
+        match (str): 匹配的键模式，默认为'*'，表示匹配所有键。
+
+        返回:
+        list: 匹配的键列表。
+        """
+        data_list = []
+        for key in self.redis_client.scan_iter(match=match):
+            if isinstance(key, bytes):
+                key = key.decode('utf-8')
+            data_list.append(key)
+
+        return data_list
+
     def close(self):
         """关闭Redis连接"""
         try:

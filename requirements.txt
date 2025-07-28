@@ -8,4 +8,5 @@ uvicorn[standard]
 jinja2
 python-multipart
 aiofiles
+fastmcp
 

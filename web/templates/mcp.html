@@ -1,0 +1,857 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+.tool-card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.tool-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.tool-card.enabled {
+    border-left: 4px solid #28a745;
+    background-color: #f8fff9;
+}
+
+.tool-card.disabled {
+    border-left: 4px solid #dc3545;
+    background-color: #fff8f8;
+}
+
+.tool-status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tool-status.enabled {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.tool-status.disabled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.tool-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-top: 0.5rem;
+}
+
+.tool-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stats-item {
+    text-align: center;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    display: block;
+}
+
+.stats-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.search-box {
+    border-radius: 25px;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 1rem;
+}
+
+.search-box:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.filter-btn {
+    border-radius: 20px;
+    padding: 0.375rem 1rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.filter-btn:hover {
+    background: #f8f9fa;
+}
+
+.filter-btn.active:hover {
+    background: #5a6fd8;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 300px;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -150px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    max-height: 200px;
+    overflow-y: auto;
+    word-wrap: break-word;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* 工具卡片悬浮效果 */
+.tool-card {
+    transition: all 0.3s ease;
+}
+
+.tool-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* 查看详情按钮样式 */
+.btn-view-details {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.btn-view-details:hover {
+    background: #e9ecef;
+    color: #495057;
+    border-color: #adb5bd;
+}
+
+.batch-actions {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #28a745;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-cogs me-2"></i>
+            MCP工具管理
+        </h1>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshTools()">
+                <i class="fas fa-sync-alt me-1"></i>刷新
+            </button>
+            <button class="btn btn-success" onclick="enableAllTools()">
+                <i class="fas fa-check-circle me-1"></i>全部启用
+            </button>
+            <button class="btn btn-danger" onclick="disableAllTools()">
+                <i class="fas fa-times-circle me-1"></i>全部禁用
+            </button>
+        </div>
+    </div>
+
+    <!-- 统计信息卡片 -->
+    <div class="stats-card">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stats-item">
+                    <span class="stats-number" id="total-tools">-</span>
+                    <span class="stats-label">总工具数</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-item">
+                    <span class="stats-number" id="enabled-tools">-</span>
+                    <span class="stats-label">已启用</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-item">
+                    <span class="stats-number" id="disabled-tools">-</span>
+                    <span class="stats-label">已禁用</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-item">
+                    <span class="stats-number" id="server-status">运行中</span>
+                    <span class="stats-label">服务状态</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选 -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control search-box" id="search-input" 
+                   placeholder="搜索工具名称或描述..." onkeyup="filterTools()">
+        </div>
+        <div class="col-md-6">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">
+                    <i class="fas fa-list me-1"></i>全部
+                </button>
+                <button class="filter-btn" data-filter="enabled" onclick="setFilter('enabled')">
+                    <i class="fas fa-check-circle me-1"></i>已启用
+                </button>
+                <button class="filter-btn" data-filter="disabled" onclick="setFilter('disabled')">
+                    <i class="fas fa-times-circle me-1"></i>已禁用
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量操作 -->
+    <div class="batch-actions d-none" id="batch-actions">
+        <div class="d-flex justify-content-between align-items-center">
+            <span>
+                <i class="fas fa-check-square me-2"></i>
+                已选择 <span id="selected-count">0</span> 个工具
+            </span>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-success" onclick="batchEnable()">
+                    <i class="fas fa-check me-1"></i>批量启用
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="batchDisable()">
+                    <i class="fas fa-times me-1"></i>批量禁用
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+                    <i class="fas fa-times me-1"></i>取消选择
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工具列表 -->
+    <div class="row" id="tools-container">
+        <!-- 工具卡片将通过JavaScript动态生成 -->
+        <div class="col-12">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-2 text-muted">正在加载MCP工具...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 空状态 -->
+    <div class="empty-state d-none" id="empty-state">
+        <i class="fas fa-tools"></i>
+        <h4>暂无MCP工具</h4>
+        <p>系统中还没有注册任何MCP工具，请检查工具配置。</p>
+    </div>
+</div>
+
+<!-- 消息提示模态框 -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalTitle">提示</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="messageModalBody">
+                <!-- 消息内容 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let allTools = [];
+let filteredTools = [];
+let currentFilter = 'all';
+let selectedTools = new Set();
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadTools();
+});
+
+// 加载所有工具
+async function loadTools() {
+    try {
+        showLoading();
+        const response = await axios.get('/api/mcp/tools');
+        
+        if (response.data.success) {
+            allTools = response.data.data.tools;
+            updateStats(response.data.data);
+            filterTools();
+        } else {
+            showError('加载工具失败: ' + response.data.message);
+        }
+    } catch (error) {
+        console.error('加载工具失败:', error);
+        showError('加载工具失败: ' + error.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+// 更新统计信息
+function updateStats(data) {
+    document.getElementById('total-tools').textContent = data.total_count || 0;
+    document.getElementById('enabled-tools').textContent = data.enabled_count || 0;
+    document.getElementById('disabled-tools').textContent = data.disabled_count || 0;
+}
+
+// 筛选工具
+function filterTools() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    filteredTools = allTools.filter(tool => {
+        // 搜索筛选
+        const matchesSearch = !searchTerm || 
+            tool.name.toLowerCase().includes(searchTerm) ||
+            (tool.title && tool.title.toLowerCase().includes(searchTerm)) ||
+            (tool.description && tool.description.toLowerCase().includes(searchTerm));
+        
+        // 状态筛选
+        const matchesFilter = currentFilter === 'all' ||
+            (currentFilter === 'enabled' && tool.enabled) ||
+            (currentFilter === 'disabled' && !tool.enabled);
+        
+        return matchesSearch && matchesFilter;
+    });
+    
+    renderTools();
+}
+
+// 设置筛选器
+function setFilter(filter) {
+    currentFilter = filter;
+    
+    // 更新按钮状态
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+    
+    filterTools();
+}
+
+// 渲染工具列表
+function renderTools() {
+    const container = document.getElementById('tools-container');
+    const emptyState = document.getElementById('empty-state');
+    
+    if (filteredTools.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('d-none');
+        return;
+    }
+    
+    emptyState.classList.add('d-none');
+    
+    const html = filteredTools.map(tool => createToolCard(tool)).join('');
+    container.innerHTML = html;
+}
+
+// 创建工具卡片
+function createToolCard(tool) {
+    const statusClass = tool.enabled ? 'enabled' : 'disabled';
+    const statusText = tool.enabled ? '已启用' : '已禁用';
+    const actionButton = tool.enabled ? 
+        `<button class="btn btn-sm btn-outline-danger" onclick="toggleTool('${tool.name}', false)">
+            <i class="fas fa-times me-1"></i>禁用
+        </button>` :
+        `<button class="btn btn-sm btn-outline-success" onclick="toggleTool('${tool.name}', true)">
+            <i class="fas fa-check me-1"></i>启用
+        </button>`;
+    
+    return `
+        <div class="col-md-6 col-lg-4">
+            <div class="tool-card ${statusClass}" data-tool="${tool.name}">
+                <div class="card-body position-relative">
+                    <div class="loading-overlay d-none" id="loading-${tool.name}">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">处理中...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="check-${tool.name}" onchange="updateSelection()">
+                        </div>
+                        <span class="tool-status ${statusClass}">${statusText}</span>
+                    </div>
+                    
+                    <h6 class="card-title mb-2 d-flex justify-content-between align-items-center">
+                        <span>${escapeHtml(tool.title || tool.name)}</span>
+                        ${tool.description && tool.description.length > 50 ? 
+                            `<button class="btn btn-view-details" onclick="showToolDetails('${tool.name}', event)" title="查看完整描述">
+                                <i class="fas fa-eye"></i>
+                            </button>` : ''}
+                    </h6>
+                    
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-tag me-1"></i>
+                        ${escapeHtml(tool.name)}
+                    </p>
+                    
+                    <div class="tool-description">
+                        ${tool.description ? escapeHtml(tool.description).substring(0, 80) + (tool.description.length > 80 ? '...' : '') : '暂无描述'}
+                    </div>
+                    
+                    <div class="tool-actions mt-3">
+                        <label class="switch me-2">
+                            <input type="checkbox" ${tool.enabled ? 'checked' : ''} 
+                                   onchange="toggleTool('${tool.name}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                        ${actionButton}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 切换工具状态
+async function toggleTool(toolName, enable) {
+    try {
+        showToolLoading(toolName);
+        
+        const endpoint = enable ? 'enable' : 'disable';
+        const response = await axios.post(`/api/mcp/tools/${toolName}/${endpoint}`);
+        
+        if (response.data.success) {
+            showSuccess(response.data.message);
+            await loadTools(); // 重新加载工具列表
+        } else {
+            showError(response.data.message);
+        }
+    } catch (error) {
+        console.error('切换工具状态失败:', error);
+        showError('操作失败: ' + error.message);
+    } finally {
+        hideToolLoading(toolName);
+    }
+}
+
+// 批量启用工具
+async function enableAllTools() {
+    if (confirm('确定要启用所有工具吗？')) {
+        await batchUpdateTools(allTools.map(tool => ({tool_name: tool.name, enabled: true})));
+    }
+}
+
+// 批量禁用工具
+async function disableAllTools() {
+    if (confirm('确定要禁用所有工具吗？')) {
+        await batchUpdateTools(allTools.map(tool => ({tool_name: tool.name, enabled: false})));
+    }
+}
+
+// 批量启用选中的工具
+async function batchEnable() {
+    const updates = Array.from(selectedTools).map(toolName => ({
+        tool_name: toolName,
+        enabled: true
+    }));
+    await batchUpdateTools(updates);
+}
+
+// 批量禁用选中的工具
+async function batchDisable() {
+    const updates = Array.from(selectedTools).map(toolName => ({
+        tool_name: toolName,
+        enabled: false
+    }));
+    await batchUpdateTools(updates);
+}
+
+// 批量更新工具
+async function batchUpdateTools(updates) {
+    try {
+        showLoading();
+        
+        // 构造正确的请求格式
+        const requestData = {
+            tools: {}
+        };
+        
+        updates.forEach(update => {
+            requestData.tools[update.tool_name] = update.enabled;
+        });
+        
+        const response = await axios.post('/api/mcp/tools/batch', requestData);
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            showSuccess(`批量操作完成，成功 ${data.updated_count}/${data.total_count} 个工具`);
+            await loadTools();
+            clearSelection();
+        } else {
+            showError('批量操作失败: ' + response.data.message);
+        }
+    } catch (error) {
+        console.error('批量操作失败:', error);
+        showError('批量操作失败: ' + error.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+// 更新选择状态
+function updateSelection() {
+    selectedTools.clear();
+    
+    document.querySelectorAll('input[id^="check-"]:checked').forEach(checkbox => {
+        const toolName = checkbox.id.replace('check-', '');
+        selectedTools.add(toolName);
+    });
+    
+    const batchActions = document.getElementById('batch-actions');
+    const selectedCount = document.getElementById('selected-count');
+    
+    if (selectedTools.size > 0) {
+        batchActions.classList.remove('d-none');
+        selectedCount.textContent = selectedTools.size;
+    } else {
+        batchActions.classList.add('d-none');
+    }
+}
+
+// 清除选择
+function clearSelection() {
+    selectedTools.clear();
+    document.querySelectorAll('input[id^="check-"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateSelection();
+}
+
+// 刷新工具列表
+function refreshTools() {
+    loadTools();
+}
+
+// 显示工具加载状态
+function showToolLoading(toolName) {
+    const loading = document.getElementById(`loading-${toolName}`);
+    if (loading) {
+        loading.classList.remove('d-none');
+    }
+}
+
+// 隐藏工具加载状态
+function hideToolLoading(toolName) {
+    const loading = document.getElementById(`loading-${toolName}`);
+    if (loading) {
+        loading.classList.add('d-none');
+    }
+}
+
+// 显示页面加载状态
+function showLoading() {
+    const container = document.getElementById('tools-container');
+    container.innerHTML = `
+        <div class="col-12">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-2 text-muted">正在加载MCP工具...</p>
+            </div>
+        </div>
+    `;
+}
+
+// 隐藏页面加载状态
+function hideLoading() {
+    // 加载完成后会调用renderTools()，所以这里不需要特殊处理
+}
+
+// 显示工具详情
+function showToolDetails(toolName, event) {
+    event.stopPropagation();
+    
+    const tool = allTools.find(t => t.name === toolName);
+    if (!tool) return;
+    
+    const modalHtml = `
+        <div class="modal fade" id="toolDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-info-circle me-2"></i>
+                            工具详情 - ${escapeHtml(tool.title || tool.name)}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>工具名称：</strong>
+                            </div>
+                            <div class="col-md-8">
+                                <code>${escapeHtml(tool.name)}</code>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <strong>显示标题：</strong>
+                            </div>
+                            <div class="col-md-8">
+                                ${escapeHtml(tool.title || '未设置')}
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <strong>当前状态：</strong>
+                            </div>
+                            <div class="col-md-8">
+                                <span class="badge ${tool.enabled ? 'bg-success' : 'bg-secondary'}">
+                                    ${tool.enabled ? '已启用' : '已禁用'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <strong>工具描述：</strong>
+                                <div class="mt-2 p-3 bg-light rounded" style="max-height: 300px; overflow-y: auto;">
+                                    ${tool.description ? escapeHtml(tool.description).replace(/\n/g, '<br>') : '暂无描述信息'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                        <button type="button" class="btn ${tool.enabled ? 'btn-warning' : 'btn-success'}" 
+                                onclick="toggleToolFromModal('${tool.name}', ${!tool.enabled})">
+                            <i class="fas ${tool.enabled ? 'fa-pause' : 'fa-play'} me-1"></i>
+                            ${tool.enabled ? '禁用工具' : '启用工具'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 移除已存在的模态框
+    const existingModal = document.getElementById('toolDetailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // 添加新的模态框
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // 显示模态框
+    const modal = new bootstrap.Modal(document.getElementById('toolDetailsModal'));
+    modal.show();
+    
+    // 模态框关闭后清理
+    document.getElementById('toolDetailsModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+// 从模态框中切换工具状态
+async function toggleToolFromModal(toolName, enable) {
+    try {
+        const endpoint = enable ? 'enable' : 'disable';
+        const response = await axios.post(`/api/mcp/tools/${toolName}/${endpoint}`);
+        
+        if (response.data.success) {
+            showSuccess(response.data.message);
+            await loadTools(); // 重新加载工具列表
+            
+            // 关闭模态框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('toolDetailsModal'));
+            if (modal) {
+                modal.hide();
+            }
+        } else {
+            showError(response.data.message);
+        }
+    } catch (error) {
+        console.error('切换工具状态失败:', error);
+        showError('操作失败: ' + error.message);
+    }
+}
+
+// 显示成功消息
+function showSuccess(message) {
+    showMessage('成功', message, 'success');
+}
+
+// 显示错误消息
+function showError(message) {
+    showMessage('错误', message, 'error');
+}
+
+// 显示消息
+function showMessage(title, message, type) {
+    const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+    document.getElementById('messageModalTitle').textContent = title;
+    document.getElementById('messageModalBody').innerHTML = `
+        <div class="alert alert-${type === 'success' ? 'success' : 'danger'} mb-0">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${escapeHtml(message)}
+        </div>
+    `;
+    modal.show();
+}
+
+// HTML转义
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}

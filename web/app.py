@@ -16,13 +16,25 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from fnewscrawler.utils.logger import LOGGER
-from .api import login_router, crawler_router, monitor_router
+from .api import login_router, crawler_router, monitor_router, mcp_router
+from fnewscrawler.mcp import mcp_server
+from fnewscrawler.mcp.mcp_manager import MCPManager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 启动时的操作（如果需要）
+    # 启动时的操作
+    try:
+        LOGGER.info("FNewsCrawler Web应用正在启动")
+        # 初始化MCP工具状态
+        mcp_manager = MCPManager()
+        await mcp_manager.init_tools_status()
+        LOGGER.info("MCP工具状态初始化完成")
+        
+    except Exception as e:
+        LOGGER.error(f"应用启动时发生错误: {e}")
+    
     yield
 
     # 关闭时的操作
@@ -48,14 +60,24 @@ async def lifespan(app: FastAPI):
         LOGGER.error(f"应用关闭时发生错误: {e}")
 
 
-# 创建FastAPI应用实例
+# 创建MCP服务器的ASGI应用
+mcp_app = mcp_server.http_app(path='/mcp')
+
+# 创建FastAPI应用实例，集成MCP生命周期
+@asynccontextmanager
+async def combined_lifespan(app: FastAPI):
+    """组合应用和MCP的生命周期管理"""
+    async with lifespan(app):
+        async with mcp_app.lifespan(app):
+            yield
+
 app = FastAPI(
     title="FNewsCrawler Web API",
     description="财经新闻爬虫和登录管理Web应用",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=combined_lifespan
 )
 
 # 添加CORS中间件
@@ -84,18 +106,23 @@ if not templates_dir.exists():
 
 templates = Jinja2Templates(directory=str(templates_dir))
 
+# 挂载MCP服务器
+app.mount("/mcp", mcp_app)
+
 # 注册API路由
 app.include_router(login_router, prefix="/api/login", tags=["登录管理"])
 app.include_router(crawler_router, prefix="/api/crawler", tags=["爬虫管理"])
 app.include_router(monitor_router, prefix="/api/monitor", tags=["系统监控"])
+app.include_router(mcp_router, prefix="/api/mcp", tags=["MCP管理"])
 
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """主页"""
     return templates.TemplateResponse(
+        request,
         "index.html", 
-        {"request": request, "title": "FNewsCrawler - 财经新闻爬虫管理平台"}
+        {"title": "FNewsCrawler - 财经新闻爬虫管理平台"}
     )
 
 
@@ -103,8 +130,9 @@ async def home(request: Request):
 async def login_page(request: Request):
     """登录管理页面"""
     return templates.TemplateResponse(
+        request,
         "login.html", 
-        {"request": request, "title": "登录管理"}
+        {"title": "登录管理"}
     )
 
 
@@ -112,8 +140,9 @@ async def login_page(request: Request):
 async def crawler_page(request: Request):
     """爬虫管理页面"""
     return templates.TemplateResponse(
+        request,
         "crawler.html", 
-        {"request": request, "title": "爬虫管理"}
+        {"title": "爬虫管理"}
     )
 
 
@@ -121,8 +150,19 @@ async def crawler_page(request: Request):
 async def monitor_page(request: Request):
     """系统监控页面"""
     return templates.TemplateResponse(
+        request,
         "monitor.html", 
-        {"request": request, "title": "系统监控"}
+        {"title": "系统监控"}
+    )
+
+
+@app.get("/mcp", response_class=HTMLResponse)
+async def mcp_page(request: Request):
+    """MCP管理页面"""
+    return templates.TemplateResponse(
+        request,
+        "mcp.html", 
+        {"title": "MCP管理"}
     )
 
 

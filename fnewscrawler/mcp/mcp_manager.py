@@ -36,7 +36,7 @@ class MCPManager:
         """
         获取工具
         :param tool_name: 工具名称
-        :return: 工具对象
+        :return: 工具信息
         """
         tool = await self.mcp_server.get_tool(tool_name)
         info_dict = {
@@ -71,6 +71,8 @@ class MCPManager:
         except Exception as e:
             return False
     
+
+    
     async def disable_tool(self, tool_name:str)->bool:
         """
         禁用工具
@@ -88,11 +90,17 @@ class MCPManager:
 
     async def init_tools_status(self):
         """
-        数据库里面保存着标记为关闭的工具信息
+        数据库里面保存着标记为关闭的工具信息，需要在启动时恢复这些工具的状态
+        :return:
         """
         keys = self.redis.scan_iter("fnewscrawler:mcp:status:*")
         for key in keys:
-            value = await self.redis.get(key)
+            value = self.redis.get(key)
             #恢复已经禁用的mcp工具状态
             if not value:
-                await self.disable_tool(key)
+                # key可能是字符串或字节，需要处理
+                if isinstance(key, bytes):
+                    tool_name = key.decode().split(":")[-1]
+                else:
+                    tool_name = key.split(":")[-1]
+                await self.disable_tool(tool_name)

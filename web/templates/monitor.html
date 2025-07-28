@@ -90,6 +90,26 @@
     background-color: #fff8f8;
 }
 
+.context-status-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.context-status-info .badge {
+    font-size: 0.75rem;
+}
+
+.context-item {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.context-item:last-child {
+    margin-bottom: 0;
+}
+
 
 
 .loading-overlay {
@@ -575,27 +595,40 @@ function updateContextList(contexts) {
     let html = '';
     Object.entries(contexts).forEach(([siteName, info]) => {
         const statusClass = info.is_healthy ? 'healthy' : 'unhealthy';
+        const statusText = info.is_healthy ? '健康' : '异常';
+        const creationTime = info.creation_time ? formatTimestamp(info.creation_time * 1000) : '-';
+        const lastUsedTime = info.last_used ? formatTimestamp(info.last_used * 1000) : '-';
+        
         html += `
             <div class="context-item ${statusClass}">
-                <div class="row align-items-center">
+                <div class="row align-items-center mb-2">
                     <div class="col-md-3">
                         <strong>${siteName}</strong>
                         <span class="status-indicator ${statusClass} ms-2"></span>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-9">
+                        <div class="context-status-info">
+                            <span class="badge bg-${statusClass === 'healthy' ? 'success' : 'danger'} me-2">状态: ${statusText}</span>
+                            <small class="text-muted me-3">创建时间: ${creationTime}</small>
+                            <small class="text-muted">最后使用: ${lastUsedTime}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="row align-items-center">
+                    <div class="col-md-3">
                         <small class="text-muted">存活: ${formatDuration(info.age_seconds)}</small>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <small class="text-muted">空闲: ${formatDuration(info.idle_seconds)}</small>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <small class="text-muted">使用: ${info.usage_count}次</small>
                     </div>
                     <div class="col-md-3 text-end">
-                        <button class="btn btn-sm btn-outline-warning me-1" onclick="refreshContext('${siteName}')">
+                        <button class="btn btn-sm btn-outline-warning me-1" onclick="refreshContext('${siteName}')" title="刷新上下文">
                             <i class="fas fa-redo"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="closeContext('${siteName}')">
+                        <button class="btn btn-sm btn-outline-danger" onclick="closeContext('${siteName}')" title="关闭上下文">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -817,31 +850,43 @@ function updateContextList(contexts) {
         return;
     }
     
-    // 构建上下文列表HTML
     let html = '';
-    Object.entries(contexts).forEach(([id, ctx]) => {
-        const status = ctx.is_healthy ? 'healthy' : 'unhealthy';
-        const statusText = ctx.is_healthy ? '健康' : '异常';
-        const createdTime = formatTimestamp(ctx.created_time * 1000);
-        const lastUsedTime = formatTimestamp(ctx.last_used_time * 1000);
+    Object.entries(contexts).forEach(([siteName, info]) => {
+        const statusClass = info.is_healthy ? 'healthy' : 'unhealthy';
+        const statusText = info.is_healthy ? '健康' : '异常';
+        const creationTime = info.creation_time ? formatTimestamp(info.creation_time * 1000) : '-';
+        const lastUsedTime = info.last_used ? formatTimestamp(info.last_used * 1000) : '-';
         
         html += `
-            <div class="context-item ${status} mb-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="mb-1">
-                            <span class="status-indicator ${status}"></span>
-                            Context ID: ${escapeHtml(id)}
-                        </h6>
-                        <div class="small text-muted">
-                            状态: ${statusText} | 
-                            创建时间: ${createdTime} | 
-                            最后使用: ${lastUsedTime}
+            <div class="context-item ${statusClass}">
+                <div class="row align-items-center mb-2">
+                    <div class="col-md-3">
+                        <strong>${siteName}</strong>
+                        <span class="status-indicator ${statusClass} ms-2"></span>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="context-status-info">
+                            <span class="badge bg-${statusClass === 'healthy' ? 'success' : 'danger'} me-2">状态: ${statusText}</span>
+                            <small class="text-muted me-3">创建时间: ${creationTime}</small>
+                            <small class="text-muted">最后使用: ${lastUsedTime}</small>
                         </div>
                     </div>
-                    <div>
-                        <button class="btn btn-sm btn-outline-danger" 
-                                onclick="contextAction('close', '${id}')">
+                </div>
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <small class="text-muted">存活: ${formatDuration(info.age_seconds)}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">空闲: ${formatDuration(info.idle_seconds)}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">使用: ${info.usage_count}次</small>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <button class="btn btn-sm btn-outline-warning me-1" onclick="refreshContext('${siteName}')" title="刷新上下文">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="closeContext('${siteName}')" title="关闭上下文">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>

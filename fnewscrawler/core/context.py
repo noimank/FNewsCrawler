@@ -383,9 +383,10 @@ class ContextManager:
                 "age_seconds": int(current_time - creation_time),
                 "idle_seconds": int(current_time - last_used),
                 "usage_count": usage_count,
-                "is_healthy": await self._is_context_healthy(self._contexts[site_name])
+                "is_healthy": await self._is_context_healthy(self._contexts[site_name]),
+                "last_used": last_used,
+                "creation_time": creation_time
             }
-
         return stats
 
     async def close_site_context(self, site_name: str):

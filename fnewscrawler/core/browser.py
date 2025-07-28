@@ -155,10 +155,6 @@ class BrowserManager:
 
             return self._browser
 
-    async def create_context(self, **kwargs):
-        """创建新的浏览器上下文，推荐的高并发使用方式"""
-        browser = await self.get_browser()
-        return await browser.new_context(**kwargs)
 
     async def get_browser_info(self) -> dict:
         """获取浏览器信息用于监控"""

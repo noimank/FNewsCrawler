@@ -66,9 +66,11 @@ class MCPManager:
         try:
             tool = await self.mcp_server.get_tool(tool_name)
             tool.enable()
-            self.redis.delete(f"fnewscrawler:mcp:status:{tool_name}")
+            #主要针对有些mcp工具定义时就是关闭的，状态改变则需要记录
+            self.redis.set(f"fnewscrawler:mcp:status:{tool_name}", True)
             return True
         except Exception as e:
+            self.redis.delete(f"fnewscrawler:mcp:status:{tool_name}")
             return False
     
 
@@ -90,17 +92,19 @@ class MCPManager:
 
     async def init_tools_status(self):
         """
-        数据库里面保存着标记为关闭的工具信息，需要在启动时恢复这些工具的状态
+        数据库里面保存着用户修改的mcp工具的信息，需要在启动时恢复这些工具的状态
         :return:
         """
         keys = self.redis.scan_iter("fnewscrawler:mcp:status:*")
         for key in keys:
             value = self.redis.get(key)
-            #恢复已经禁用的mcp工具状态
+            # key可能是字符串或字节，需要处理
+            if isinstance(key, bytes):
+                tool_name = key.decode().split(":")[-1]
+            else:
+                tool_name = key.split(":")[-1]
             if not value:
-                # key可能是字符串或字节，需要处理
-                if isinstance(key, bytes):
-                    tool_name = key.decode().split(":")[-1]
-                else:
-                    tool_name = key.split(":")[-1]
                 await self.disable_tool(tool_name)
+            else:
+                await self.enable_tool(tool_name)
+

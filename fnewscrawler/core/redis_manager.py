@@ -331,7 +331,7 @@ def get_redis() -> RedisManager:
     return redis_manager
 
 
-def cache_news_content(url: str, content: dict) -> bool:
+def cache_news_content(url: str, content: str) -> bool:
     """缓存新闻内容 (24小时TTL)"""
     key = f"news:content:{url}"
     # 从环境变量获取过期时间,单位天,默认3天
@@ -339,7 +339,7 @@ def cache_news_content(url: str, content: dict) -> bool:
     return redis_manager.set(key, content, ex=expired_time)
 
 
-def get_cached_news_content(url: str) -> Optional[dict]:
+def get_cached_news_content(url: str) -> Optional[str]:
     """获取缓存的新闻内容"""
     key = f"news:content:{url}"
     return redis_manager.get(key)

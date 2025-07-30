@@ -1,11 +1,10 @@
-from fnewscrawler.spiders.iwencai import IwencaiCrawler
+from fnewscrawler.spiders.iwencai import iwencai_crawl_from_query
 import asyncio
 
-crawler = IwencaiCrawler()
 
 
 async def test_crawl():
-    result = await crawler.crawl("平安银行", 2)
+    result = await iwencai_crawl_from_query("三七互娱", 2)
     print(result)
 
 

@@ -24,7 +24,7 @@ async def navigate_to_page(page, target_page: int):
         await page.wait_for_load_state("domcontentloaded")
                 
     except Exception as e:
-        print(f"翻页过程中发生错误: {e}")
+        LOGGER.error(f"处理 {page.url} 翻页过程中发生错误: {e}")
 
 
 
@@ -47,7 +47,6 @@ async def extract_single_news(item) -> Optional[Dict[str, str]]:
         }
         
         # 提取URL
-
         url_element = item.locator("a").first
         if await url_element.count() > 0:
             url = await url_element.get_attribute('href')
@@ -108,8 +107,8 @@ async def extract_news_list(page) -> List[Dict[str, str]]:
         await page.wait_for_selector(".info-result-list", timeout=10000)
         
         items = await page.locator(".split-style.entry-4").all()
-        if items:
-            LOGGER.info(f"找到新闻列表，共{len(items)}条")
+        # if items:
+        #     LOGGER.info(f"找到新闻列表，共{len(items)}条")
 
         # 使用asyncio.gather并发提取新闻信息
         news_tasks = [extract_single_news(item) for item in items]
@@ -121,11 +120,11 @@ async def extract_news_list(page) -> List[Dict[str, str]]:
             if isinstance(news, dict) and news.get('url')
         ]
 
-        LOGGER.info(f"成功提取{len(news_list)}条新闻")
+        LOGGER.info(f"iwencai：成功提取{len(news_list)}条新闻")
         return news_list
         
     except Exception as e:
-        LOGGER.error(f"提取新闻列表时发生错误: {e}")
+        LOGGER.error(f"iwencai：提取新闻列表时发生错误: {e}")
         return []
 
 async def iwencai_crawl_from_query(query: str, pageno: int = 1) -> List[Dict[str, str]]:
@@ -141,7 +140,6 @@ async def iwencai_crawl_from_query(query: str, pageno: int = 1) -> List[Dict[str
     """
     context = await context_manager.get_context("iwencai")
     page = await context.new_page()
-    news_list = []
     base_url = "https://www.iwencai.com/unifiedwap/info/news"
     try:
         # 访问问财新闻页面
@@ -167,7 +165,6 @@ async def iwencai_crawl_from_query(query: str, pageno: int = 1) -> List[Dict[str
         # 使用gather并发处理获取详细的新闻内容
         async def process_news_item(item):
             url = item["url"]
-            source = item["source"]
             real_url,new_content = await news_crawl_from_url(url, context_type="iwencai")
             item["content"] = new_content
             item["url"] = real_url
@@ -180,7 +177,7 @@ async def iwencai_crawl_from_query(query: str, pageno: int = 1) -> List[Dict[str
         return news_list
 
     except Exception as e:
-        LOGGER.error(f"爬取过程中发生错误: {e}")
+        LOGGER.error(f"iwencai：爬取 “{query}”第{pageno} 页过程中发生错误: {e}")
         return []
     finally:
         await page.close()

@@ -1,4 +1,5 @@
 import asyncio
+import os
 import time
 from typing import Optional
 
@@ -32,6 +33,7 @@ class BrowserManager:
         self._max_retry_attempts = 3
         self._retry_delay = 2  # 重试延迟
         self._init_done = True
+        self._use_headless = True if os.getenv("PW_USE_HEADLESS", "true") == "true" else False
 
         LOGGER.info("BrowserManager 实例已创建")
 
@@ -91,7 +93,7 @@ class BrowserManager:
             # 启动新的浏览器实例
             self._playwright = await async_playwright().start()
             self._browser = await self._playwright.chromium.launch(
-                headless=False,
+                headless=self._use_headless,
                 args=[
                     '--no-sandbox',
                     '--disable-dev-shm-usage',

@@ -58,7 +58,7 @@ pip install -r requirements.txt
 #### 方式一：使用启动脚本（推荐）
 
 ```bash
-python start_web.py
+python main.py
 ```
 
 #### 方式二：直接使用uvicorn

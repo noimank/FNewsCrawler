@@ -1,0 +1,32 @@
+
+services:
+  fnewscrawler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: fnewscrawler
+    image: noimankdocker/fnewscrawler:latest
+    ports:
+      - "8480:8480"
+    environment:
+      - WEB_HOST=0.0.0.0
+      - WEB_PORT=8480
+      - REDIS_HOST=192.168.3.7
+      - REDIS_PORT=6379
+      - MCP_SERVER_TYPE=http
+      - PW_USE_HEADLESS=true
+      - PW_CONTEXT_MAX_IDLE_TIME=3600
+      - PW_CONTEXT_HEALTH_CHECK_TIME=300
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8480/api/monitor/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - fnewscrawler-network
+
+networks:
+  fnewscrawler-network:
+    driver: bridge

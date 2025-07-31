@@ -1,0 +1,88 @@
+# Git相关
+.git
+.gitignore
+
+# Python缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# IDE相关
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志文件
+logs/
+*.log
+
+# 数据文件
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# 测试相关
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# 临时文件
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# 环境配置
+.env
+.env.local
+.env.*.local
+.dockerignore
+.env.docker
+
+# Node.js相关（如果有前端构建）
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker相关
+Dockerfile.dev
+docker-compose.dev.yml
+
+# 文档
+*.md
+docs/
+
+# 测试文件
+test/
+tests/
+
+# 其他
+*.bak
+*.orig

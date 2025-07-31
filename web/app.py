@@ -5,7 +5,7 @@ FastAPI Web应用主文件
 
 提供财经新闻爬虫和登录管理的Web API接口
 """
-
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -59,9 +59,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         LOGGER.error(f"应用关闭时发生错误: {e}")
 
+mcp_app = None
 
 # 创建MCP服务器的ASGI应用
-mcp_app = mcp_server.http_app(path='/mcp-http')
+if os.getenv("MCP_SERVER_TYPE","sse") == "sse":
+    mcp_app = mcp_server.sse_app(path='/mcp-server')
+    LOGGER.info("MCP服务器已配置为SSE模式")
+else:
+    mcp_app = mcp_server.http_app(path='/mcp-server')
+    LOGGER.info("MCP服务器已配置为HTTP模式")
 
 # 创建FastAPI应用实例，集成MCP生命周期
 @asynccontextmanager

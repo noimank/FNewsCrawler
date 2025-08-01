@@ -263,4 +263,4 @@ import fnewscrawler.mcp.新站点名.crawl
 
 **为大模型提供专业的财经数据支持** 🚀
 
-如有问题或建议，请提交 [Issue](https://github.com/your-repo/FNewsCrawler/issues) 或 [Pull Request](https://github.com/your-repo/FNewsCrawler/pulls)。
+如有问题或建议，请提交 [Issue](https://github.com/noimank/FNewsCrawler/issues) 或 [Pull Request](https://github.com/noimank/FNewsCrawler/pulls)。

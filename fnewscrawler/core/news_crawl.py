@@ -16,12 +16,81 @@ news_selector_map = {
         ".post-detail-text"
     ],
     # 新浪网
-    "sina": ".article",
+    "sina": [
+        ".article",
+        "#content"
+    ],
     # 微信公众号
     "qq": "#js_content",
     "weixin": "#js_content",
     #搜狐
-    "sohu": ".article"
+    "sohu": ".article",
+    #IT门户
+    "donews": [".general-article"
+               "#content"],
+    #36氪
+    "36kr":[".articleDetailContent", ".content"],
+    #中国能源网
+    "china5e": ".showcontent",
+    #第一机械工程
+    "d1cm":".wzCon",
+    # 证券之星
+    "stockstar": ".jour_text",
+    #和讯网
+    "hexun": ".art_contextBox",
+    "163": ".post_body",
+    #电子发烧友
+    "elecfans": [
+        ".simditor-body.clearfix",
+        ".simditor-body",
+        ".clearfix"
+    ],
+    #金融界
+    "jrj": ".article_content",
+    #金投网
+    "cngold": ".article_con",
+    # 东方财富
+    "eastmoney": [
+        ".txtinfos",
+        "#ContentBody"
+    ],
+    # 上海证券报
+    "cnstock":".content_article",
+    #中国证券报
+    "cs": "founder-content",
+    #中财网
+    "cfi": "#tdcontent",
+    #钛媒体
+    "tmtpost": "article",
+    #速途网
+    "sootoo": ".entry-content",
+    #新华网
+    "news": "#detailContent",
+    #上海新闻网
+    "casas-pkucis": ".article_content",
+    #东南网
+    "fjsen": "#new_message_id",
+    #云南网
+    "yunnan": "#layer216",
+    #人民网
+    "people": ".rm_txt_con.cf",
+    #张家口新闻网
+    "zjknews": ".i_left_body",
+    #盖世汽车
+    "gasgoo": ".ant-spin-container",
+    #中华网
+    "china": ["#artiCon", ".artiCon.re_cut"],
+    #凤凰网
+    "ifeng": ".index_articleBox_6mBbT",
+    "futunn": [
+        ".inner.origin_content.zh-cn",
+        ".origin_content"
+    ],
+    #商洛之窗
+    "slrbs": ".content",
+    #每日经济网
+    "mrjjxw": ".m-articleContent"
+
 
 }
 

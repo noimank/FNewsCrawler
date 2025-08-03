@@ -3,12 +3,19 @@ import io
 
 import pandas as pd
 
+from fnewscrawler.core import get_redis
 from fnewscrawler.core.context import context_manager
 from fnewscrawler.utils import LOGGER
 
 
-async def fetch_page_data(context, url):
+async def fetch_page_data(context, url, rank_type):
     """获取单个页面的数据"""
+    redis = get_redis()
+    redis_key = f"iwencai_concept_funds_{rank_type}_{url}"
+    # redis.delete(redis_key)
+    if redis.exists(redis_key) and rank_type in ["3day", "5day", "10day", "20day"]:
+        return redis.get(redis_key, serializer="pickle")
+
     page = None
     try:
         page = await context.new_page()
@@ -21,6 +28,11 @@ async def fetch_page_data(context, url):
         
         # 使用pandas解析HTML表格
         df = pd.read_html(io.StringIO(html_content))[0]
+
+        # 缓存数据，半天后过期
+        if rank_type.lower() in ["3day", "5day", "10day", "20day"]:
+            redis.set(redis_key, df, ex=43200, serializer="pickle")
+
         return df
     except Exception as e:
         LOGGER.error(f"iwencai_concept_funds：获取页面 {url} 数据失败: {str(e)}")
@@ -54,7 +66,7 @@ async def iwencai_concept_funds(rank_type: str = "1day"):
         urls = url_map.get(rank_type, [])
         
         # 使用gather并发获取所有页面数据，每个URL创建独立的page
-        tasks = [fetch_page_data(context, url) for url in urls]
+        tasks = [fetch_page_data(context, url, rank_type) for url in urls]
         dfs = await asyncio.gather(*tasks)
         
         # 过滤掉空的DataFrame并合并所有页面数据

@@ -7,7 +7,6 @@ import asyncio
 
 
 async def test_iwencai_industry_funds():
-    print(await iwencai_industry_funds(rank_type="1day"))
     markdown_table = await iwencai_industry_funds("1day")
     print(markdown_table)
     print("------------3day-------------------")

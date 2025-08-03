@@ -1,36 +1,54 @@
 import asyncio
 import re
-from typing import List
 from io import StringIO
 
 import pandas as pd
-from playwright.async_api import Page
 
+from fnewscrawler.core import get_redis
 from fnewscrawler.core.context import context_manager
 from fnewscrawler.utils import LOGGER
 
 
-async def fetch_page_data(page: Page, url: str) -> pd.DataFrame:
+async def fetch_page_data(context, url: str, rank_type: str) -> pd.DataFrame:
     """获取单页数据的辅助函数"""
-    await page.goto(url)
-    await page.wait_for_selector('table')
+    redis = get_redis()
+    redis_key = f"iwencai_industry_funds_{rank_type}_{url}"
+    if redis.exists(redis_key) and rank_type in ["3day", "5day", "10day", "20day"]:
+        return redis.get(redis_key, serializer="pickle")
 
-    # 获取表格HTML内容
-    table_html = await page.evaluate('() => document.querySelector("table").outerHTML')
+    page = None
+    try:
+        page = await context.new_page()
 
-    # 使用StringIO包装HTML字符串，避免deprecation警告
-    html_io = StringIO(table_html)
-    df = pd.read_html(html_io)[0]
+        await page.goto(url)
+        await page.wait_for_selector('table')
 
-    # 清理列名，移除可能的多级表头
-    df.columns = [col[1] if isinstance(col, tuple) else col for col in df.columns]
+        # 获取表格HTML内容
+        table_html = await page.evaluate('() => document.querySelector("table").outerHTML')
 
-    # 清理数据中的特殊字符
-    for col in df.columns:
-        if df[col].dtype == object:
-            df[col] = df[col].apply(lambda x: re.sub(r'[\s%]+', '', str(x)) if pd.notnull(x) else x)
+        # 使用StringIO包装HTML字符串，避免deprecation警告
+        html_io = StringIO(table_html)
+        df = pd.read_html(html_io)[0]
 
-    return df
+        # 清理列名，移除可能的多级表头
+        df.columns = [col[1] if isinstance(col, tuple) else col for col in df.columns]
+
+        # 清理数据中的特殊字符
+        for col in df.columns:
+            if df[col].dtype == object:
+                df[col] = df[col].apply(lambda x: re.sub(r'[\s%]+', '', str(x)) if pd.notnull(x) else x)
+
+        # 缓存数据，半天后过期
+        if rank_type.lower() in ["3day", "5day", "10day", "20day"]:
+            redis.set(redis_key, df, ex=43200, serializer="pickle")
+
+        return df
+    except Exception:
+        LOGGER.exception("获取同花顺行业资金流向数据失败")
+        return pd.DataFrame()
+    finally:
+        if page:
+            await page.close()
 
 
 async def iwencai_industry_funds(rank_type="1day"):
@@ -53,19 +71,15 @@ async def iwencai_industry_funds(rank_type="1day"):
     if rank_type not in period_map:
         raise ValueError(f"不支持的rank_type: {rank_type}，支持的选项为: {list(period_map.keys())}")
 
-    context = None
-    pages: List[Page] = []
+
     try:
         context = await context_manager.get_context("iwencai")
-
-        # 根据URL数量创建对应数量的页面
-        pages = [await context.new_page() for _ in range(len(period_map[rank_type]))]
 
         # 直接使用period_map中定义的URL
         urls = period_map[rank_type]
 
         # 使用gather并发获取数据
-        tasks = [fetch_page_data(page, url) for page, url in zip(pages, urls)]
+        tasks = [fetch_page_data(context, url, rank_type) for url in urls]
         dfs = await asyncio.gather(*tasks)
 
         # 合并数据
@@ -80,10 +94,4 @@ async def iwencai_industry_funds(rank_type="1day"):
         LOGGER.error(f"iwencai_industry_funds 错误: {str(e)}")
         raise
 
-    finally:
-        # 确保资源正确关闭
-        for page in pages:
-            try:
-                await page.close()
-            except Exception as e:
-                LOGGER.error(f"iwencai_industry_funds 关闭页面时发生错误: {str(e)}")
+

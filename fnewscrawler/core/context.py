@@ -149,6 +149,16 @@ class ContextManager:
             Object.defineProperty(navigator, 'webdriver', {
                 get: () => undefined
             });
+            
+            // 伪造 navigator.platform
+            Object.defineProperty(navigator, 'platform', {
+              get: () => 'Win32' // 或其他操作系统
+            });
+            
+            // 伪造 navigator.languages
+            Object.defineProperty(navigator, 'languages', {
+              get: () => ['zh-CN', 'zh', 'en-US', 'en']
+            });
 
             // 隐藏自动化相关属性
             delete navigator.__proto__.webdriver;

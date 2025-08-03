@@ -11,4 +11,5 @@ aiofiles
 fastmcp
 tabulate
 fake-useragent
+pandas
 

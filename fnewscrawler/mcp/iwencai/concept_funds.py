@@ -136,7 +136,7 @@ async def get_today_hot_concepts() -> str:
     Returns:
         str: Markdown格式的概念板块资金流向数据
     """
-    return await get_iwencai_concept_funds("1day")
+    return await iwencai_concept_funds("1day")
 
 
 @mcp_server.tool(
@@ -152,7 +152,7 @@ async def get_weekly_concept_trends() -> str:
     Returns:
         str: Markdown格式的概念板块周度资金流向数据
     """
-    return await get_iwencai_concept_funds("5day")
+    return await iwencai_concept_funds("5day")
 
 
 @mcp_server.tool(
@@ -169,8 +169,8 @@ async def compare_concept_fund_flows() -> str:
         str: Markdown格式的概念板块资金流向对比数据
     """
     try:
-        daily_data = await get_iwencai_concept_funds("1day")
-        weekly_data = await get_iwencai_concept_funds("5day")
+        daily_data = await iwencai_concept_funds("1day")
+        weekly_data = await iwencai_concept_funds("5day")
 
         result = f"""# 概念板块资金流向对比分析
 

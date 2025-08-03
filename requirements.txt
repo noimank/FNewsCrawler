@@ -10,4 +10,5 @@ python-multipart
 aiofiles
 fastmcp
 tabulate
+fake-useragent
 

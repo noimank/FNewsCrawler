@@ -31,6 +31,8 @@ EXPOSE 8480
 # 启动脚本
 COPY docker/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
+# 确保脚本使用Unix行结束符
+RUN sed -i 's/\r$//' /app/start.sh
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \

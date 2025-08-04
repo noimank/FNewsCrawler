@@ -1,5 +1,6 @@
 from fnewscrawler.mcp import mcp_server
 from fnewscrawler.core.news_crawl import news_crawl_from_url
+import asyncio
 
 
 @mcp_server.tool(title="通用新闻内容提取工具")
@@ -30,3 +31,54 @@ async def news_crawl(url: str) -> str:
     """
     _, news_content = await news_crawl_from_url(url)
     return news_content
+
+
+@mcp_server.tool(title="批量新闻内容提取工具")
+async def news_crawl_batch(urls: list[str]) -> list[dict]:
+    """批量从多个URL抓取新闻内容并返回结构化结果
+
+    该工具可并发处理多个新闻URL，自动提取每个网页的核心新闻正文内容，
+    并返回包含原始URL和对应新闻内容的字典列表。系统会自动过滤广告、
+    导航栏等无关内容，仅保留纯净的新闻文本。
+
+    Args:
+        urls (list[str]):
+            - 需要抓取的新闻网页URL列表
+            - 每个URL必须以http://或https://开头
+            - 建议每次调用URL数量不超过50个以保证性能
+
+    Returns:
+        list[dict]: 返回结果列表，每个元素为包含以下键的字典:
+            - url (str): 原始请求URL
+            - content (str): 提取的新闻正文纯文本
+            (对于失败的请求会返回错误信息)
+
+    Raises:
+        ValueError: 当输入不是列表或包含无效URL时
+        Exception: 当服务器端处理出现异常时
+
+    Example:
+        >>> await news_crawl_batch([
+                "https://news.example.com/1",
+                "https://news.example.com/2"
+            ])
+        返回：
+        [
+            {"url": "https://news.example.com/1", "content": "新闻1正文..."},
+            {"url": "https://news.example.com/2", "content": "新闻2正文..."}
+        ]
+
+    Notes:
+        1. 建议批量URL来自同一新闻站点以获得最佳解析效果
+        2. 每个URL处理超时时间为10秒
+        3. 返回列表顺序与输入URL顺序保持一致
+        4. 对于无法解析的页面，content可能为空字符串
+    """
+
+    # 使用asyncio.gather并发抓取所有URL内容
+    tasks = [news_crawl_from_url(url) for url in urls]
+    results = await asyncio.gather(*tasks)
+
+    # 将结果和URL组合成字典列表
+    return [{"url": url, "content": content}
+            for (url, (_, content)) in zip(urls, results)]

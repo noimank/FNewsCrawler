@@ -1,7 +1,7 @@
 
 from fnewscrawler.mcp import mcp_server
 from fnewscrawler.core.redis_manager import  get_redis
-
+import os
 
 class MCPManager:
     _instance = None
@@ -13,6 +13,8 @@ class MCPManager:
     def __init__(self):
         self.mcp_server = mcp_server
         self.redis = get_redis()
+        #该环境变量用于区分多实例部署时，每个实例的mcp状态的记忆，方便恢复
+        self.deploy_node_name = os.getenv("DEPLOY_NODE_NAME", "FNewsCrawlerNode")
     
     async def get_all_tools_info(self)->list:
         """
@@ -67,10 +69,10 @@ class MCPManager:
             tool = await self.mcp_server.get_tool(tool_name)
             tool.enable()
             #主要针对有些mcp工具定义时就是关闭的，状态改变则需要记录
-            self.redis.set(f"fnewscrawler:mcp:status:{tool_name}", True)
+            self.redis.set(f"fnewscrawler:{self.deploy_node_name}:mcp:status:{tool_name}", True)
             return True
         except Exception as e:
-            self.redis.delete(f"fnewscrawler:mcp:status:{tool_name}")
+            self.redis.delete(f"fnewscrawler:{self.deploy_node_name}:mcp:status:{tool_name}")
             return False
     
 
@@ -84,10 +86,10 @@ class MCPManager:
         try:
             tool = await self.mcp_server.get_tool(tool_name)
             tool.disable()
-            self.redis.set(f"fnewscrawler:mcp:status:{tool_name}", False)
+            self.redis.set(f"fnewscrawler:{self.deploy_node_name}:mcp:status:{tool_name}", False)
             return True
         except Exception as e:
-            self.redis.delete(f"fnewscrawler:mcp:status:{tool_name}")
+            self.redis.delete(f"fnewscrawler:{self.deploy_node_name}:mcp:status:{tool_name}")
             return False
 
     async def init_tools_status(self):
@@ -95,7 +97,7 @@ class MCPManager:
         数据库里面保存着用户修改的mcp工具的信息，需要在启动时恢复这些工具的状态
         :return:
         """
-        keys = self.redis.scan_iter("fnewscrawler:mcp:status:*")
+        keys = self.redis.scan_iter(f"fnewscrawler:{self.deploy_node_name}:mcp:status:*")
         for key in keys:
             value = self.redis.get(key)
             # key可能是字符串或字节，需要处理

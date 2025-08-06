@@ -12,4 +12,4 @@ fastmcp
 tabulate
 fake-useragent
 pandas
-
+html5lib

@@ -6,7 +6,7 @@ MCP管理API接口
 提供MCP工具的管理功能，包括查看、启用、禁用等操作
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -261,3 +261,30 @@ async def get_mcp_status():
     except Exception as e:
         LOGGER.error(f"获取MCP状态失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取MCP状态失败: {str(e)}")
+
+
+@router.get("/call_tool/{tool_name}", response_model=APIResponse)
+async def call_mcp_tool(tool_name: str, request: Request):
+    """
+    调用指定的MCP工具
+
+    Args:
+        tool_name: 工具名称
+        request: 请求对象，包含查询参数
+
+    Returns:
+        工具执行结果
+    """
+    try:
+        params = dict(request.query_params)
+        result = await mcp_manager.call_tool(tool_name, **params)
+        return APIResponse(
+            success=True,
+            message=f"调用工具 {tool_name} 成功",
+            data={"result": result}
+        )
+    except Exception as e:
+        return APIResponse(
+            success=False,
+            message=f"调用工具 {tool_name} 失败: {str(e)}",
+        )

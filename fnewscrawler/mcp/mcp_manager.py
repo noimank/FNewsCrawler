@@ -110,3 +110,16 @@ class MCPManager:
             else:
                 await self.enable_tool(tool_name)
 
+    async def call_tool(self, tool_name:str, **kwargs)->dict:
+        """
+        调用工具
+        :param tool_name: 工具名称
+        :param kwargs: 工具参数
+        :return: 工具返回值，字典格式
+        """
+        tool = await self.mcp_server.get_tool(tool_name)
+        if tool:
+            result = await tool.run(kwargs)
+            return result.content
+        else:
+            return {"error": f"工具{tool_name}不存在"}

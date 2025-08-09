@@ -140,6 +140,27 @@ cherryStudio配置：
 }
 ```
 
+### get方法调用
+
+
+调用端点：http://localhost:8480/api/mcp/call_tool/{tool_name}?xxxx
+
+参数：
+- tool_name：工具名称
+- xxxx：工具参数
+
+返回：
+- 工具执行结果，json格式
+
+示例：
+```
+GET http://localhost:8480/api/mcp/call_tool/get_industry_stock_funds_flow_tool?industry_name=银行
+```
+
+
+
+
+
 ## 🛠️ 功能开发路线图
 
 ### 🔄 已完成

@@ -2,7 +2,7 @@ from fnewscrawler.mcp import mcp_server
 from fnewscrawler.spiders.eastmoney import get_industry_stock_funds_flow, get_industry_history_funds_flow
 
 
-@mcp_server.tool(name="获取行业历史资金流")
+@mcp_server.tool(title="获取行业历史资金流")
 async def get_industry_history_funds_flow_tool(industry_name: str):
     """
     获取指定行业近期历史资金流向数据，分析行业整体资金面变化趋势
@@ -63,7 +63,7 @@ async def get_industry_history_funds_flow_tool(industry_name: str):
     return markdown_table
 
 
-@mcp_server.tool(name="获取行业个股资金流")
+@mcp_server.tool(title="获取行业个股资金流")
 async def get_industry_stock_funds_flow_tool(industry_name: str):
     """
     获取指定行业内所有个股的当日资金流向排名数据，筛选行业内资金流入最强的个股

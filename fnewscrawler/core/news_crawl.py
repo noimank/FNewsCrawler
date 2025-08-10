@@ -1,8 +1,10 @@
+import asyncio
+
 from playwright.async_api import TimeoutError
 
 from fnewscrawler.core.context import context_manager
 from fnewscrawler.core.redis_manager import get_cached_news_content, cache_news_content
-from fnewscrawler.utils import extract_second_level_domain
+from fnewscrawler.utils import extract_second_level_domain, LOGGER
 
 # 采用二级域名来映射选择器，选择器都是 CSS 或 ID 类型，不要填写其他选择器，否则没有提速加成
 news_selector_map = {
@@ -89,11 +91,32 @@ news_selector_map = {
     #商洛之窗
     "slrbs": ".content",
     #每日经济网
-    "mrjjxw": ".m-articleContent"
-
+    "mrjjxw": ".m-articleContent",
+    #cctv
+    "cctv": ".content_area",
+    #中国经济网
+    "ce": ["#ozoom.content", "founder-content"]
 
 }
 
+
+
+async def get_real_url(page, initial_url):
+        # 尝试等待 URL 变化
+        try:
+            # 等待 URL 发生变化，设置一个较短的超时时间，例如 5 秒
+            await page.wait_for_url(lambda url: url != initial_url, timeout=2000)
+            # print("检测到 URL 跳转。")
+        except TimeoutError:
+            # 如果超时，说明 URL 没有变化，这是预期的行为
+            # print("URL 没有跳转。")
+            pass
+
+        # 无论是否发生跳转，都可以安全地获取最终 URL
+        final_url = page.url
+        # print(f"最终 URL 是: {final_url}")
+
+        return final_url
 
 
 async def news_crawl_from_url(url: str, context_type: str = "common") -> tuple:
@@ -125,14 +148,11 @@ async def news_crawl_from_url(url: str, context_type: str = "common") -> tuple:
         # context.set_default_timeout(10000)
         page = await context.new_page()
 
-        await page.goto(url)
-        # --- 优化点 START ---
-        # 移除显式的 wait_for_load_state，依赖 goto 的默认行为和 locator 的自动等待
-        # await page.wait_for_load_state("domcontentloaded")
-        # --- 优化点 END ---
+        await page.goto(url, wait_until="networkidle")
 
         # 获取当前url (可能因为跳转而改变)
-        current_url = page.url
+        current_url = await get_real_url(page, url)
+        # print("current url:" , current_url)
         # 再次尝试获取缓存内容，主要是针对url是带有跳转的情况
         news_content = get_cached_news_content(current_url)
         if news_content:
@@ -169,7 +189,7 @@ async def news_crawl_from_url(url: str, context_type: str = "common") -> tuple:
 
         # 如果通过特定选择器未能获取内容，则获取整个页面的文本内容
         if fail_to_get_specific_content:
-            news_content = await page.inner_text()  # 这个也会有默认超时
+            news_content = await page.locator("body").inner_text()  # 这个也会有默认超时
 
         # 将html内容缓存，如果url不同就缓存两份，主要是假设能尽快的获取到跳转后的内容
         if url != current_url:
@@ -178,6 +198,7 @@ async def news_crawl_from_url(url: str, context_type: str = "common") -> tuple:
 
         return current_url, news_content
     except Exception as e:
+        LOGGER.error(f"从URL {url} 爬取新闻内容时发生错误: {e}")
         return url, ""
     finally:
         if page:

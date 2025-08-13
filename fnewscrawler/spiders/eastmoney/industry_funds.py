@@ -1,17 +1,13 @@
 import asyncio
-
-from fnewscrawler.core import  context_manager
-from .utils import  eastmoney_industry_map
-
-
 from io import StringIO
 
 import pandas as pd
 
 from fnewscrawler.core import context_manager
+from .utils import eastmoney_industry_map
 
 
-async def get_industry_stock_funds_flow(industry_name: str)-> str:
+async def get_industry_stock_funds_flow(industry_name: str,rank_type="1day")-> str:
     """
     获取股票行业个股资金流信息
     :return: 行业个股资金流信息
@@ -20,9 +16,16 @@ async def get_industry_stock_funds_flow(industry_name: str)-> str:
     if not industry_code:
         return "行业名称不存在"
     url = f"https://data.eastmoney.com/bkzj/{industry_code}.html"
+    if rank_type not in ["1day", "5day", "10day"]:
+        return "rank_type参数错误,仅支持：1day, 5day, 10day"
 
+    head_key = "今日"
+    if rank_type == "5day":
+        head_key = "5日"
+    elif rank_type == "10day":
+        head_key = "10日"
     context = await context_manager.get_context("eastmoney")
-    clumns_name = ["序号", "代码", "名称", "相关","最新价", "今日涨跌幅", "今日主力净流入净额", "今日主力净流入净占比", "今日超大单净流入净额", "今日超大单净流入净占比", "今日大单净流入净额", "今日大单净流入净占比", "今日中单净流入净额", "今日中单净流入净占比", "今日小单净流入净额", "今日小单净流入净占比"]
+    clumns_name = ["序号", "代码", "名称", "相关","最新价", f"{head_key}涨跌幅", f"{head_key}主力净流入净额", f"{head_key}主力净流入净占比", f"{head_key}超大单净流入净额", f"{head_key}超大单净流入净占比", f"{head_key}大单净流入净额", f"{head_key}大单净流入净占比", f"{head_key}中单净流入净额", f"{head_key}中单净流入净占比", f"{head_key}小单净流入净额", f"{head_key}小单净流入净占比"]
     page = None
     dfs =[]
     try:
@@ -33,6 +36,19 @@ async def get_industry_stock_funds_flow(industry_name: str)-> str:
         #刷新页面是为了把弹窗去掉
         await page.reload()
         await page.wait_for_load_state("domcontentloaded")
+        await asyncio.sleep(1.2)
+        await page.locator("text=今日排行").click()
+        #控制页面下滑
+        await page.mouse.wheel(0, 1000)
+        if rank_type == "5day":
+            await page.locator("text=5日排行").click()
+            await page.wait_for_selector("li.at:has-text('5日排行')")
+        elif rank_type == "10day":
+            await page.locator("text=10日排行").click()
+            # await page.wait_for_selector("li.at:has-text('10日排行')")
+            # print("10日排行")
+        #增加sleep，不然实在无法保证排行的表格会加载完成
+        await asyncio.sleep(2)
         # 确保表格主体可见，避免在数据加载前抓取
         await page.locator(".dataview-body").wait_for(state="visible")
         while True:

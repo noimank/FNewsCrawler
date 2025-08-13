@@ -63,10 +63,10 @@ async def get_industry_history_funds_flow_tool(industry_name: str):
     return markdown_table
 
 
-@mcp_server.tool(title="获取行业个股资金流")
-async def get_industry_stock_funds_flow_tool(industry_name: str):
+@mcp_server.tool(title="获取指定行业内所有个股的资金流排名")
+async def get_industry_stock_funds_flow_tool(industry_name: str,rank_type="1day"):
     """
-    获取指定行业内所有个股的当日资金流向排名数据，筛选行业内资金流入最强的个股
+    获取指定行业内所有个股的指定时间周期的资金流向排名数据，筛选行业内资金流入最强的个股
 
     此工具提供行业内个股级别的资金流向对比分析，帮助在看好的行业中精选个股，
     是自上而下投资策略中从行业配置到个股选择的关键分析工具。
@@ -80,8 +80,8 @@ async def get_industry_stock_funds_flow_tool(industry_name: str):
     - 寻找涨幅滞后但资金流入的潜力个股
 
     参数说明：
-    :param industry_name: 行业名称，与行业历史资金流工具使用相同的标准行业名称：
-        支持的完整行业列表包括：通用设备、汽车零部件、专用设备、船舶制造、
+    :param industry_name: 行业名称，仅支持东方财富标准行业分类，只能从以下行业中选择：
+        通用设备、汽车零部件、专用设备、船舶制造、
         航天航空、消费电子、电机、家电行业、纺织服装、电子元件、游戏、
         交运设备、橡胶制品、航运港口、互联网服务、有色金属、电池、保险、
         专业服务、化纤行业、装修装饰、汽车服务、燃气、造纸印刷、环保行业、
@@ -96,38 +96,13 @@ async def get_industry_stock_funds_flow_tool(industry_name: str):
         工程建设、医疗服务、光学光电子、医疗器械、银行、水泥建材、
         文化传媒、生物制品、中药、通信设备、化学制药
 
-        建议先用行业历史资金流工具分析行业趋势，再用此工具筛选个股
-
-    返回数据字段详解：
-    - 序号：按今日主力净流入净额排序的名次
-    - 代码：股票交易代码（6位数字）
-    - 名称：股票简称
-    - 最新价：当前股票价格（元）
-    - 今日涨跌幅：当日股价涨跌幅度
-    - 今日主力净流入净额：机构和大户当日净买入金额（亿元/万元）
-    - 今日主力净流入净占比：主力净流入占该股成交额比例
-    - 今日超大单净流入净额：超大额交易当日净流入
-    - 今日超大单净流入净占比：超大单净流入占成交额比例
-    - 今日大单净流入净额：大额交易当日净流入
-    - 今日大单净流入净占比：大单净流入占成交额比例
-    - 今日中单净流入净额：中等交易当日净流入
-    - 今日中单净流入净占比：中单净流入占成交额比例
-    - 今日小单净流入净额：小额交易当日净流入
-    - 今日小单净流入净占比：小单净流入占成交额比例
-
-    选股策略要点：
-    1. 主力净流入前列+涨幅居中：资金推动型上涨，可持续性较强
-    2. 主力大幅流入+涨幅滞后：潜在补涨机会，值得重点关注
-    3. 超大单异常流入：可能有重大消息，需结合公告分析
-    4. 主力流入+小单流出：专业资金布局，散户恐慌，潜在机会
-    5. 行业龙头资金集中度：判断是否存在强者恒强效应
-
-    风险提示：
-    - 单日数据存在偶然性，建议结合多日数据趋势分析
-    - 资金流入不等于后续上涨，需结合基本面和技术面
-    - 注意区分资金流入是利好兑现还是预期建仓
-
+    :param rank_type: 排名类型，可选值包括：
+        - 1day：今日排名（默认）
+        - 5day：5日排名
+        - 10day：10日排名
     :return: Markdown格式的行业个股资金流排名表格，按主力净流入金额降序排列
     """
-    markdown_table = await get_industry_stock_funds_flow(industry_name)
+    if rank_type not in ["1day","5day","10day"]:
+        return "rank_type must be 1day,5day or 10day"
+    markdown_table = await get_industry_stock_funds_flow(industry_name,rank_type)
     return markdown_table

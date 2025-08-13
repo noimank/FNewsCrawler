@@ -5,7 +5,7 @@ import pandas as pd
 from fnewscrawler.core import context_manager
 
 
-async def get_secu_margin_trading_info(stock_code)-> str:
+async def get_secu_margin_trading_info(stock_code, data_num=40)-> str:
     """
     获取股票融资融券信息
     :return: 融资融券信息
@@ -45,6 +45,9 @@ async def get_secu_margin_trading_info(stock_code)-> str:
             # 手动设置列名
             final_df = pd.concat(all_dfs,axis=0)
             final_df = final_df.drop_duplicates()
+            # 只返回data_num条数据
+            data_num = min(data_num, 100)
+            final_df = final_df.head(data_num)
             # 转换为 Markdown 格式
             markdown_table = final_df.to_markdown(index=False)
             return markdown_table

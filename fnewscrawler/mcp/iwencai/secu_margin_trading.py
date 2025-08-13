@@ -3,9 +3,9 @@ from fnewscrawler.spiders.iwencai import get_secu_margin_trading_info
 
 
 @mcp_server.tool(title="获取个股融资融券信息")
-async def get_secu_margin_trading_info_tool(stock_code: str):
+async def get_secu_margin_trading_info_tool(stock_code: str, data_num: int = 40):
     """
-    获取指定股票近100个交易日的详细融资融券交易数据
+    获取指定股票近{data_num}个交易日的详细融资融券交易数据，最大可获取100条数据
 
     融资融券是重要的市场情绪和资金面指标，反映投资者对股票的看多看空情绪。
     此工具提供全面的融资融券数据分析，帮助判断市场参与者的投资行为和情绪变化。
@@ -25,6 +25,7 @@ async def get_secu_margin_trading_info_tool(stock_code: str):
         - 科创板：688981（中芯国际）、688599（天合光能）
         输入6位纯数字代码即可，无需交易所前缀
         注意：只有融资融券标的股票才有相关数据
+    :param data_num: 返回数据条数，默认40条
 
     返回数据字段详解：
     - 序号：数据记录的序列号（1为最新交易日）
@@ -56,7 +57,7 @@ async def get_secu_margin_trading_info_tool(stock_code: str):
     - 需结合股价走势、成交量等指标综合分析
     - 部分股票可能暂停融资融券交易，届时数据会显示异常
 
-    :return: Markdown格式的融资融券数据表格，包含近100个交易日的完整两融交易信息
+    :return: Markdown格式的融资融券数据表格，包含近{data_num}个交易日的完整两融交易信息
     """
-    markdown_table = await get_secu_margin_trading_info(stock_code)
+    markdown_table = await get_secu_margin_trading_info(stock_code, data_num)
     return markdown_table

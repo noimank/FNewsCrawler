@@ -4,7 +4,8 @@ from fnewscrawler.spiders.iwencai import get_secu_margin_trading_info
 
 async def test_get_secu_margin_trading_info():
     stock_code = "600519"
-    info = await get_secu_margin_trading_info(stock_code)
+    data_num = 1000
+    info = await get_secu_margin_trading_info(stock_code, data_num)
     print(info)
 
 

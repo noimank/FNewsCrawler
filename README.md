@@ -175,6 +175,7 @@ GET http://localhost:8480/api/mcp/call_tool/get_industry_stock_funds_flow_tool?i
 - [x] 同花顺问财历史资金流向查询工具
 - [x] 东方财富某行业历史资金流查询工具
 - [x] 东方财富某行业个股历史资金流查询工具
+- [x] 东方财富大盘资金流查询工具
 
 ### 📈 即将推出
 - [ ] 资金流向分析接口

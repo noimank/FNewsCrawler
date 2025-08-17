@@ -95,7 +95,11 @@ news_selector_map = {
     #cctv
     "cctv": ".content_area",
     #中国经济网
-    "ce": ["#ozoom.content", "founder-content"]
+    "ce": ["#ozoom.content", "founder-content"],
+    #广州日报
+    "dayoo": ".info",
+    #四川
+    "thecover":".article-content"
 
 }
 

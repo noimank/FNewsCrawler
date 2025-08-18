@@ -109,7 +109,7 @@ async def get_real_url(page, initial_url):
         # 尝试等待 URL 变化
         try:
             # 等待 URL 发生变化，设置一个较短的超时时间，例如 5 秒
-            await page.wait_for_url(lambda url: url != initial_url, timeout=2000)
+            await page.wait_for_url(lambda url: url != initial_url, timeout=1500)
             # print("检测到 URL 跳转。")
         except TimeoutError:
             # 如果超时，说明 URL 没有变化，这是预期的行为
@@ -152,7 +152,8 @@ async def news_crawl_from_url(url: str, context_type: str = "common") -> tuple:
         # context.set_default_timeout(10000)
         page = await context.new_page()
 
-        await page.goto(url, wait_until="networkidle")
+        await page.goto(url, wait_until="domcontentloaded")
+        await page.reload()
 
         # 获取当前url (可能因为跳转而改变)
         current_url = await get_real_url(page, url)

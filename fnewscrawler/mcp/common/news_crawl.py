@@ -1,3 +1,5 @@
+import os
+
 from fnewscrawler.mcp import mcp_server
 from fnewscrawler.core.news_crawl import news_crawl_from_url
 import asyncio
@@ -74,9 +76,15 @@ async def news_crawl_batch(urls: list[str]) -> list[dict]:
         3. 返回列表顺序与输入URL顺序保持一致
         4. 对于无法解析的页面，content可能为空字符串
     """
+    # 创建信号量限制最大并发数为20
+    semaphore = asyncio.Semaphore(int(os.getenv("MAX_CRAWL_CONCURRENCY", 20)))
 
-    # 使用asyncio.gather并发抓取所有URL内容
-    tasks = [news_crawl_from_url(url) for url in urls]
+    async def fetch_with_semaphore(url):
+        async with semaphore:
+            return await news_crawl_from_url(url)
+
+    # 使用信号量控制并发抓取所有URL内容
+    tasks = [fetch_with_semaphore(url) for url in urls]
     results = await asyncio.gather(*tasks)
 
     # 将结果和URL组合成字典列表

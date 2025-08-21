@@ -123,6 +123,15 @@ async def get_real_url(page, initial_url):
         return final_url
 
 
+
+#有些网站是需要跳转才能访问，所以需要带上对应上下文
+CONTEXT_TYPE_MAP = {
+    "10jqka": "iwencai",
+    "iwencai": "iwencai",
+    "eastmoney": "eastmoney"
+
+}
+
 async def news_crawl_from_url(url: str, context_type: str = "common") -> tuple:
     """从指定URL爬取新闻内容。
 
@@ -142,6 +151,8 @@ async def news_crawl_from_url(url: str, context_type: str = "common") -> tuple:
    """
     page = None
     try:
+        #尝试带上对应的上下文，增强反爬检测
+        context_type = CONTEXT_TYPE_MAP.get(extract_second_level_domain(url), context_type)
         # 在浏览器没进行实际跳转操作时就查询有没有缓存，避免浪费浏览器资源
         news_content = get_cached_news_content(url)
         if news_content:

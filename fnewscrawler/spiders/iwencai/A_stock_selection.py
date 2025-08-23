@@ -72,7 +72,7 @@ async def iwencai_A_stock_selection(select_condition:str):
         if stock_count == 0:
             return f"在{select_condition}条件下没有选出任何股票"
 
-        print("stock_count========",stock_count)
+        # print("stock_count========",stock_count)
 
         #因为超过10支股票后会有分页的按钮
         if stock_count >10:
@@ -157,6 +157,10 @@ async def iwencai_A_stock_selection(select_condition:str):
             final_df = final_df.drop(columns=["check_box"])
             #去重
             final_df = final_df.drop_duplicates()
+            # 将“代码”列的数据类型转换为字符串
+            final_df['股票代码'] = final_df['股票代码'].astype(str)
+            # 使用 str.zfill() 方法补全前导零，例如，补到6位
+            final_df['股票代码'] = final_df['股票代码'].str.zfill(6)
             # 使用 pandas 的 to_markdown 方法转换为 Markdown 格式
             markdown_table = final_df.to_markdown(index=False)
             return markdown_table

@@ -83,6 +83,10 @@ async def get_industry_stock_funds_flow(industry_name: str,rank_type="1day")-> s
             final_df = pd.concat(dfs, ignore_index=True)
             #把相关这一列删除
             final_df = final_df.drop(columns=["相关"])
+            # 将“代码”列的数据类型转换为字符串
+            final_df['代码'] = final_df['代码'].astype(str)
+            # 使用 str.zfill() 方法补全前导零，例如，补到6位
+            final_df['代码'] = final_df['代码'].str.zfill(6)
             final_df = final_df.drop_duplicates()
             return final_df.to_markdown(index=False)
 

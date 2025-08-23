@@ -114,3 +114,64 @@ async def eastmoney_dragon_tiger_detail(rank_type="1day", page_num=1)-> str:
         if page:
             await page.close()
 
+
+async def eastmoney_stock_dragon_tiger_detail(stock_code: str)-> str:
+    """
+    获取龙虎榜信息
+    :param stock_code: 股票代码
+    :return: 对应股票最近一年内的龙虎榜信息
+    """
+    url = f"https://data.eastmoney.com/stock/lhb/lcsb/{stock_code}.html"
+
+    context = await context_manager.get_context("eastmoney")
+    columns_name = ["序号", "日期", "相关", "收盘价", "涨跌幅","后1日涨跌幅", "后2日涨跌幅", "后3日涨跌幅","后5日涨跌幅", "后10日涨跌幅","后20日涨跌幅","后30日涨跌幅",
+                  "上榜营业部买入合计(万)", "上榜营业部卖出合计(万)", "上榜营业部买卖净额(万)", "上榜原因"]
+
+
+    page = None
+    try:
+        page = await context.new_page()
+        await page.goto(url)
+        await page.wait_for_load_state("domcontentloaded")
+
+        #刷新页面是为了把弹窗去掉
+        await page.reload()
+        await page.wait_for_load_state("domcontentloaded")
+
+        #增加sleep，不然实在无法保证排行的表格会加载完成
+        await asyncio.sleep(1)
+        # 确保表格主体可见，避免在数据加载前抓取
+        await page.locator(".dataview-body").wait_for(state="visible")
+        # 提取表格的 HTML 字符串
+        # await page.locator(".dataview-body").wait_for(state="visible")
+        table_html = await page.locator(".dataview-body").inner_html()
+        current_df = pd.read_html(StringIO(table_html))[0]
+
+        table_flag = await page.locator(".dataview-body table tbody").inner_text()
+        if "暂无数据" in table_flag:
+            return f"最近一年没有对应股票代码为：{stock_code}的龙虎榜上榜信息"
+
+        #获取完整的上榜原因文字
+        reason_list = []
+        table_content = await page.locator(".dataview-body table tbody tr").all()
+        for item in table_content:
+            reason_title = await item.locator("td:nth-child(16)").locator("a").get_attribute("title")
+            reason_list.append(reason_title)
+
+        # 手动设置列名
+        current_df.columns = columns_name
+        current_df["上榜原因"] = reason_list
+        final_df = current_df.drop(columns=["相关"])
+        final_df = final_df.drop_duplicates()
+        # 使用 pandas 的 to_markdown 方法转换为 Markdown 格式
+        markdown_table = final_df.to_markdown(index=False)
+        return markdown_table
+      
+
+    except Exception as e:
+        return f"获取股票代码为：{stock_code}的龙虎榜信息失败: {e}"
+
+    finally:
+        if page:
+            await page.close()
+

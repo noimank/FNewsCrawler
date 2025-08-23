@@ -1,5 +1,5 @@
 from fnewscrawler.mcp import mcp_server
-from fnewscrawler.spiders.eastmoney import eastmoney_dragon_tiger_detail
+from fnewscrawler.spiders.eastmoney import eastmoney_dragon_tiger_detail, eastmoney_stock_dragon_tiger_detail
 
 
 @mcp_server.tool(title="获取龙虎榜明细")
@@ -14,4 +14,18 @@ async def get_eastmoney_dragon_tiger_detail(rank_type: str, page_num: int = 1):
         str: 龙虎榜明细,Markdown格式
     """
     markdown_table = await eastmoney_dragon_tiger_detail(rank_type, page_num)
+    return markdown_table
+
+
+@mcp_server.tool(title="获取指定股票最近一年的龙虎榜明细")
+async def get_eastmoney_stock_dragon_tiger_detail(stock_code: str):
+    """从东方财富网获取股票最近一年的龙虎榜每日明细。
+
+    Args:
+        stock_code: 股票代码，如 002214
+
+    Returns:
+        str: 龙虎榜明细,Markdown格式
+    """
+    markdown_table = await eastmoney_stock_dragon_tiger_detail(stock_code)
     return markdown_table

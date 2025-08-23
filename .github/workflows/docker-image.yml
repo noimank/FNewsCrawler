@@ -28,4 +28,4 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/fnewscrawler:latest
+          tags: ghcr.io/noimank/fnewscrawler:latest

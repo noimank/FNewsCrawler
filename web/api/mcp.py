@@ -281,7 +281,7 @@ async def call_mcp_tool(tool_name: str, request: Request):
         return APIResponse(
             success=True,
             message=f"调用工具 {tool_name} 成功",
-            data={"result": result}
+            data=result
         )
     except Exception as e:
         return APIResponse(

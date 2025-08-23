@@ -120,7 +120,7 @@ class MCPManager:
         tool = await self.mcp_server.get_tool(tool_name)
         if tool:
             result = await tool.run(kwargs)
-            return result.structured_content
+            return {"structured_content":result.structured_content, "content":result.content}
             # return result.content
         else:
             return {"error": f"工具{tool_name}不存在"}

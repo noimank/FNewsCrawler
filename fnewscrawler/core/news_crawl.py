@@ -99,7 +99,13 @@ news_selector_map = {
     #广州日报
     "dayoo": ".info",
     #四川
-    "thecover":".article-content"
+    "thecover":".article-content",
+    #理财周刊
+    "moneyweekly": ".mhcontent .mhwen",
+    # 观点网
+    "guandian": ".con_l_inner",
+    #界面新闻
+    "jiemian": ".article-main"
 
 }
 

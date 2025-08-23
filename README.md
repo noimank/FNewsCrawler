@@ -68,8 +68,7 @@ docker-compose logs -f
 ```bash
 
 #从dockerhub中拉取镜像并后台启动
-docker run --name fnewscrawler -p 8480:8480 -d noimankdocker/fnewscrawler:latest
-
+docker run --name fnewscrawler -p 8480:8480 -d ghcr.io/noimank/fnewscrawler:latest
 # 查看日志
 docker logs fnewscrawler -f
 

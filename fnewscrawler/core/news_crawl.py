@@ -22,121 +22,133 @@ news_selector_map = {
         ".article",
         "#content"
     ],
+    # 腾讯qq网
+    "qq": [
+        "#js_content",
+        ".rich_media_content"
+    ],
     # 微信公众号
-    "qq": "#js_content",
     "weixin": "#js_content",
-    #搜狐
+    # 搜狐
     "sohu": ".article",
-    #IT门户
+    # IT门户
     "donews": [".general-article"
                "#content"],
-    #36氪
-    "36kr":[".articleDetailContent", ".content"],
-    #中国能源网
+    # 36氪
+    "36kr": [".articleDetailContent", ".content"],
+    # 中国能源网
     "china5e": ".showcontent",
-    #第一机械工程
-    "d1cm":".wzCon",
+    # 第一机械工程
+    "d1cm": ".wzCon",
     # 证券之星
     "stockstar": ".jour_text",
-    #和讯网
+    # 和讯网
     "hexun": ".art_contextBox",
     "163": ".post_body",
-    #电子发烧友
+    # 电子发烧友
     "elecfans": [
         ".simditor-body.clearfix",
         ".simditor-body",
         ".clearfix"
     ],
-    #金融界
+    # 金融界
     "jrj": ".article_content",
-    #金投网
+    # 金投网
     "cngold": ".article_con",
     # 东方财富
     "eastmoney": [
         ".txtinfos",
-        "#ContentBody"
+        "#ContentBody",
+        # 股吧
+        "#post_content"
     ],
     # 上海证券报
-    "cnstock":".content_article",
-    #中国证券报
+    "cnstock": ".content_article",
+    # 中国证券报
     "cs": "founder-content",
-    #中财网
+    # 中财网
     "cfi": "#tdcontent",
-    #钛媒体
+    # 钛媒体
     "tmtpost": "article",
-    #速途网
+    # 速途网
     "sootoo": ".entry-content",
-    #新华网
+    # 新华网
     "news": "#detailContent",
-    #上海新闻网
+    # 上海新闻网
     "casas-pkucis": ".article_content",
-    #东南网
+    # 东南网
     "fjsen": "#new_message_id",
-    #云南网
+    # 云南网
     "yunnan": "#layer216",
-    #人民网
+    # 人民网
     "people": ".rm_txt_con.cf",
-    #张家口新闻网
+    # 张家口新闻网
     "zjknews": ".i_left_body",
-    #盖世汽车
+    # 盖世汽车
     "gasgoo": ".ant-spin-container",
-    #中华网
+    # 中华网
     "china": ["#artiCon", ".artiCon.re_cut"],
-    #凤凰网
+    # 凤凰网
     "ifeng": ".index_articleBox_6mBbT",
     "futunn": [
         ".inner.origin_content.zh-cn",
         ".origin_content"
     ],
-    #商洛之窗
+    # 商洛之窗
     "slrbs": ".content",
-    #每日经济网
+    # 每日经济网
     "mrjjxw": ".m-articleContent",
-    #cctv
+    # cctv
     "cctv": ".content_area",
-    #中国经济网
+    # 中国经济网
     "ce": ["#ozoom.content", "founder-content"],
-    #广州日报
+    # 广州日报
     "dayoo": ".info",
-    #四川
-    "thecover":".article-content",
-    #理财周刊
+    # 四川
+    "thecover": ".article-content",
+    # 理财周刊
     "moneyweekly": ".mhcontent .mhwen",
     # 观点网
     "guandian": ".con_l_inner",
-    #界面新闻
-    "jiemian": ".article-main"
+    # 界面新闻
+    "jiemian": ".article-main",
+    # 百度
+    "baidu": [
+        # 百度百科
+        "._18p7x",
+    ],
+    # 股城网
+    "gucheng": ".content"
 
 }
 
 
-
 async def get_real_url(page, initial_url):
-        # 尝试等待 URL 变化
-        try:
-            # 等待 URL 发生变化，设置一个较短的超时时间，例如 5 秒
-            await page.wait_for_url(lambda url: url != initial_url, timeout=1500)
-            # print("检测到 URL 跳转。")
-        except TimeoutError:
-            # 如果超时，说明 URL 没有变化，这是预期的行为
-            # print("URL 没有跳转。")
-            pass
+    # 尝试等待 URL 变化
+    try:
+        # 等待 URL 发生变化，设置一个较短的超时时间，例如 5 秒
+        await page.wait_for_url(lambda url: url != initial_url, timeout=1500)
+        # print("检测到 URL 跳转。")
+    except TimeoutError:
+        # 如果超时，说明 URL 没有变化，这是预期的行为
+        # print("URL 没有跳转。")
+        pass
 
-        # 无论是否发生跳转，都可以安全地获取最终 URL
-        final_url = page.url
-        # print(f"最终 URL 是: {final_url}")
+    # 无论是否发生跳转，都可以安全地获取最终 URL
+    final_url = page.url
+    # print(f"最终 URL 是: {final_url}")
 
-        return final_url
+    return final_url
 
 
-
-#有些网站是需要跳转才能访问，所以需要带上对应上下文
+# 有些网站是需要跳转才能访问，所以需要带上对应上下文
 CONTEXT_TYPE_MAP = {
     "10jqka": "iwencai",
     "iwencai": "iwencai",
     "eastmoney": "eastmoney"
 
 }
+
 
 async def news_crawl_from_url(url: str, context_type: str = "common") -> tuple:
     """从指定URL爬取新闻内容。
@@ -157,7 +169,7 @@ async def news_crawl_from_url(url: str, context_type: str = "common") -> tuple:
    """
     page = None
     try:
-        #尝试带上对应的上下文，增强反爬检测
+        # 尝试带上对应的上下文，增强反爬检测
         context_type = CONTEXT_TYPE_MAP.get(extract_second_level_domain(url), context_type)
         # 在浏览器没进行实际跳转操作时就查询有没有缓存，避免浪费浏览器资源
         news_content = get_cached_news_content(url)

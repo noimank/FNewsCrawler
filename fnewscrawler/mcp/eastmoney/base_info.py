@@ -1,5 +1,3 @@
-from win32con import FALSE
-
 from fnewscrawler.mcp import mcp_server
 from fnewscrawler.spiders.eastmoney import eastmoney_stock_base_info
 

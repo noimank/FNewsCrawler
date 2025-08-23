@@ -23,7 +23,7 @@ docker/
 # 一键启动服务
 docker run --name fnewscrawler \
   -p 8480:8480 \
-  -d noimankdocker/fnewscrawler:latest
+  -d ghcr.io/noimank/fnewscrawler:latest
 
 # 查看启动日志
 docker logs fnewscrawler -f
@@ -61,27 +61,6 @@ docker-compose logs -f
 
 
 ## 🐳 Docker镜像说明
-
-### 📦 官方镜像
-
-| 镜像标签 | 用途 | 说明 |
-|---------|------|------|
-| `noimankdocker/fnewscrawler:latest` | 生产环境 | 稳定版本，推荐生产使用 |
-| `noimankdocker/fnewscrawler:dev` | 开发环境 | 开发版本，包含调试工具 |
-
-### 🔧 镜像特性
-
-**内置组件：**
-- ✅ **Python 3.12** 运行环境
-- ✅ **Redis 服务器** 内置数据存储
-- ✅ **系统工具** vim、curl、htop等
-- ✅ **健康检查** 自动服务监控
-
-**镜像优势：**
-- 🚀 **开箱即用** - 无需复杂配置
-- 🛡️ **生产就绪** - 经过充分测试
-- 📦 **体积优化** - 精简的镜像大小
-- 🔄 **自动更新** - 定期发布新版本
 
 ### 🏗️ 构建流程
 
@@ -193,7 +172,7 @@ docker exec fnewscrawler playwright install-deps chromium
 
 # 如果仍有问题，重建容器
 docker rm -f fnewscrawler
-docker run --name fnewscrawler -p 8480:8480 -d noimankdocker/fnewscrawler:latest
+docker run --name fnewscrawler -p 8480:8480 -d ghcr.io/noimank/fnewscrawler:latest
 ```
 
 
@@ -207,7 +186,7 @@ docker run --name fnewscrawler \
   -p 8480:8480 \
   --memory=2g \
   --cpus=2.0 \
-  -d noimankdocker/fnewscrawler:latest
+  -d ghcr.io/noimank/fnewscrawler:latest
 
 # 实时监控资源使用
 docker stats fnewscrawler
@@ -226,7 +205,7 @@ docker network create --driver bridge fnewscrawler-net
 docker run --name fnewscrawler \
   --network fnewscrawler-net \
   -p 8480:8480 \
-  -d noimankdocker/fnewscrawler:latest
+  -d ghcr.io/noimank/fnewscrawler:latest
 ```
 
 
@@ -276,7 +255,7 @@ docker-compose exec fnewscrawler df -h
 
 #### **1. 外部Redis部署**
 ```bash
-# 🎯 推荐：使用外部Redis避免数据丢失
+# 🎯 推荐：使用外部Redis避免数据丢失，可以实现部署多个节点并共享数据
 # 启动独立Redis容器
 docker run --name redis-server \
   -p 6379:6379 \
@@ -289,7 +268,7 @@ docker run --name fnewscrawler \
   -e REDIS_HOST=your-redis-host \
   -e REDIS_PORT=6379 \
   -v $(pwd)/logs:/app/logs \
-  -d noimankdocker/fnewscrawler:latest
+  -d ghcr.io/noimank/fnewscrawler:latest
 ```
 
 #### **2. 负载均衡配置**

@@ -6,6 +6,7 @@ from .mcp_manager import MCPManager
 import fnewscrawler.mcp.iwencai
 import fnewscrawler.mcp.common
 import fnewscrawler.mcp.eastmoney
+import fnewscrawler.mcp.indicator
 
 
 __all__ = [

@@ -156,6 +156,13 @@ cherryStudio配置：
 GET http://localhost:8480/api/mcp/call_tool/get_industry_stock_funds_flow_tool?industry_name=银行
 ```
 
+如果参数类型为list，需要用逗号分隔
+
+示例：
+```
+GET http://localhost:8480/api/mcp/call_tool/news_crawl_batch?urls=http://example.com,http://example2.com
+```
+
 
 
 
@@ -177,6 +184,14 @@ GET http://localhost:8480/api/mcp/call_tool/get_industry_stock_funds_flow_tool?i
 - [x] 东方财富大盘资金流查询工具
 - [x] 东方财富股票大宗交易每日明细查询工具
 - [x] 东方财富股票龙虎榜查询工具
+- [x] tushare数据源支持
+- [x] 股票技术指标查询接口
+  - 移动平均线
+  - 布林带
+  - KDJ
+  - MACD
+  - RSI
+  - VWMA
 
 ### 📈 即将推出
 - [ ] 资金流向分析接口
@@ -186,7 +201,6 @@ GET http://localhost:8480/api/mcp/call_tool/get_industry_stock_funds_flow_tool?i
   - 营业部排名分析
 - [ ] 行情中心接口
   - 实时行情推送
-  - 技术指标计算
   - 盘口数据分析
 
 

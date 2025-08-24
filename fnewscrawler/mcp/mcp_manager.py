@@ -1,6 +1,8 @@
+import time
 
 from fnewscrawler.mcp import mcp_server
 from fnewscrawler.core.redis_manager import  get_redis
+from fnewscrawler.utils import LOGGER
 import os
 import threading
 class MCPManager:
@@ -107,17 +109,24 @@ class MCPManager:
         :return:
         """
         keys = self.redis.scan_iter(f"fnewscrawler:{self.deploy_node_name}:mcp:status:*")
+        disable_count = 0
+        enable_count = 0
+        start_time = time.time()
         for key in keys:
-            value = self.redis.get(key)
+            is_enabled = self.redis.get(key)
             # key可能是字符串或字节，需要处理
             if isinstance(key, bytes):
                 tool_name = key.decode().split(":")[-1]
             else:
                 tool_name = key.split(":")[-1]
-            if not value:
+            if not is_enabled:
                 await self.disable_tool(tool_name)
+                disable_count += 1
             else:
                 await self.enable_tool(tool_name)
+                enable_count += 1
+
+        LOGGER.info(f"init_tools_status: 初始化mcp工具状态完成，耗时{time.time()-start_time}秒，禁用{disable_count}个工具")
 
     async def call_tool(self, tool_name:str, **kwargs)->dict:
         """

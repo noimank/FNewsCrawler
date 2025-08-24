@@ -1009,7 +1009,7 @@ async function executeToolTest() {
     const params = {};
     const paramInputs = document.querySelectorAll('[data-param-name]');
     paramInputs.forEach(input => {
-        const paramName = input.getAttribute('data-param-name');
+        const paramName = input.getAttribute('data-param-name').trim();
         const paramValue = input.value.trim();
         if (paramName && paramValue) {
             params[paramName] = paramValue;

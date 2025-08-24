@@ -402,6 +402,83 @@ input:checked + .slider:before {
         </div>
     </div>
 </div>
+
+<!-- 工具测试模态框 -->
+<div class="modal fade" id="testToolModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-play-circle me-2"></i>
+                    测试工具: <span id="testToolName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- 工具信息 -->
+                <div class="mb-3">
+                    <h6><i class="fas fa-info-circle me-1"></i>工具信息</h6>
+                    <div class="bg-light p-3 rounded">
+                        <p class="mb-2"><strong>名称:</strong> <span id="testToolDisplayName"></span></p>
+                        <div class="mb-0">
+                            <strong>描述:</strong>
+                            <div id="testToolDescription" class="mt-1"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 参数输入 -->
+                <div class="mb-3">
+                    <h6><i class="fas fa-cog me-1"></i>参数设置</h6>
+                    <div id="testToolParams">
+                        <!-- 动态生成参数输入框 -->
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addCustomParam()">
+                            <i class="fas fa-plus me-1"></i>添加自定义参数
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="clearAllParams()">
+                            <i class="fas fa-trash me-1"></i>清空参数
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 执行结果 -->
+                <div class="mb-3">
+                    <h6><i class="fas fa-terminal me-1"></i>执行结果</h6>
+                    <!-- 结果类型选择标签页 -->
+                    <ul class="nav nav-tabs" id="resultTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="content-tab" data-bs-toggle="tab" data-bs-target="#content-pane" type="button" role="tab">
+                                <i class="fas fa-file-text me-1"></i>内容
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="structured-tab" data-bs-toggle="tab" data-bs-target="#structured-pane" type="button" role="tab">
+                                <i class="fas fa-code me-1"></i>结构化内容
+                            </button>
+                        </li>
+                    </ul>
+                    <!-- 结果显示区域 -->
+                    <div class="tab-content border border-top-0 rounded-bottom" id="resultTabContent">
+                        <div class="tab-pane fade show active bg-dark text-light p-3" id="content-pane" role="tabpanel" style="min-height: 200px; max-height: 400px; overflow-y: auto;">
+                            <div id="testToolContentResult" class="text-muted">点击"执行测试"按钮开始测试工具...</div>
+                        </div>
+                        <div class="tab-pane fade bg-dark text-light p-3" id="structured-pane" role="tabpanel" style="min-height: 200px; max-height: 400px; overflow-y: auto;">
+                            <div id="testToolStructuredResult" class="text-muted">点击"执行测试"按钮开始测试工具...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="executeToolTest()" id="executeTestBtn">
+                    <i class="fas fa-play me-1"></i>执行测试
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -550,6 +627,10 @@ function createToolCard(tool) {
                             <span class="slider"></span>
                         </label>
                         ${actionButton}
+                        <button class="btn btn-sm btn-outline-info ms-1" onclick="showTestTool('${tool.name}')" 
+                                ${!tool.enabled ? 'disabled' : ''}>
+                            <i class="fas fa-play me-1"></i>测试
+                        </button>
                     </div>
                 </div>
             </div>
@@ -820,6 +901,212 @@ async function toggleToolFromModal(toolName, enable) {
     } catch (error) {
         console.error('切换工具状态失败:', error);
         showError('操作失败: ' + error.message);
+    }
+}
+
+// 显示工具测试模态框
+function showTestTool(toolName) {
+    const tool = allTools.find(t => t.name === toolName);
+    if (!tool) {
+        showError('工具不存在');
+        return;
+    }
+    
+    if (!tool.enabled) {
+        showError('工具未启用，无法测试');
+        return;
+    }
+    
+    // 设置工具信息
+     document.getElementById('testToolName').textContent = toolName;
+     document.getElementById('testToolDisplayName').textContent = tool.title || toolName;
+     
+     // 处理工具描述，使用滚动方式查看
+     const descriptionElement = document.getElementById('testToolDescription');
+     const description = tool.description || '暂无描述';
+     
+     // 设置滚动样式和内容
+     descriptionElement.style.cssText = `
+         max-height: 120px;
+         overflow-y: auto;
+         white-space: pre-wrap;
+         padding: 8px;
+         background-color: #f8f9fa;
+         border: 1px solid #dee2e6;
+         border-radius: 4px;
+         font-size: 0.9em;
+         line-height: 1.4;
+     `;
+     descriptionElement.textContent = description;
+    
+    // 清空参数和结果
+    document.getElementById('testToolParams').innerHTML = '';
+    document.getElementById('testToolContentResult').innerHTML = '<div class="text-muted">点击"执行测试"按钮开始测试工具...</div>';
+    document.getElementById('testToolStructuredResult').innerHTML = '<div class="text-muted">点击"执行测试"按钮开始测试工具...</div>';
+    
+    // 显示模态框
+    const modal = new bootstrap.Modal(document.getElementById('testToolModal'));
+    modal.show();
+}
+
+// 添加自定义参数
+function addCustomParam() {
+    const paramsContainer = document.getElementById('testToolParams');
+    const paramId = 'param_' + Date.now();
+    
+    const paramHtml = `
+        <div class="row mb-2 param-row" id="${paramId}">
+            <div class="col-md-4">
+                <input type="text" class="form-control form-control-sm" placeholder="参数名" 
+                       onchange="updateParamName(this, '${paramId}')">
+            </div>
+            <div class="col-md-7">
+                <input type="text" class="form-control form-control-sm" placeholder="参数值" 
+                       data-param-name="" data-param-id="${paramId}">
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeParam('${paramId}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    paramsContainer.insertAdjacentHTML('beforeend', paramHtml);
+}
+
+// 更新参数名
+function updateParamName(input, paramId) {
+    const valueInput = document.querySelector(`[data-param-id="${paramId}"]`);
+    if (valueInput) {
+        valueInput.setAttribute('data-param-name', input.value);
+    }
+}
+
+// 移除参数
+function removeParam(paramId) {
+    const paramRow = document.getElementById(paramId);
+    if (paramRow) {
+        paramRow.remove();
+    }
+}
+
+// 清空所有参数
+function clearAllParams() {
+    document.getElementById('testToolParams').innerHTML = '';
+}
+
+
+
+// 执行工具测试
+async function executeToolTest() {
+    const toolName = document.getElementById('testToolName').textContent;
+    const executeBtn = document.getElementById('executeTestBtn');
+    const contentResultContainer = document.getElementById('testToolContentResult');
+    const structuredResultContainer = document.getElementById('testToolStructuredResult');
+    
+    // 收集参数
+    const params = {};
+    const paramInputs = document.querySelectorAll('[data-param-name]');
+    paramInputs.forEach(input => {
+        const paramName = input.getAttribute('data-param-name');
+        const paramValue = input.value.trim();
+        if (paramName && paramValue) {
+            params[paramName] = paramValue;
+        }
+    });
+    
+    try {
+        // 显示执行状态
+        executeBtn.disabled = true;
+        executeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>执行中...';
+        const loadingHtml = '<div class="text-info"><i class="fas fa-spinner fa-spin me-2"></i>正在执行工具测试...</div>';
+        contentResultContainer.innerHTML = loadingHtml;
+        structuredResultContainer.innerHTML = loadingHtml;
+        
+        // 构建请求URL
+        const queryParams = new URLSearchParams(params).toString();
+        const url = `/api/mcp/call_tool/${toolName}${queryParams ? '?' + queryParams : ''}`;
+        
+        // 发送请求
+        const response = await axios.get(url);
+        
+        // 显示结果
+        if (response.data.success) {
+            const result = response.data.data;
+            const successHeader = `
+                <div class="text-success mb-2">
+                    <i class="fas fa-check-circle me-1"></i>
+                    <strong>执行成功</strong>
+                </div>
+                <div class="mb-2">
+                    <strong>执行时间:</strong> ${new Date().toLocaleString()}
+                </div>
+            `;
+            
+            // 显示内容结果
+            let contentHtml = successHeader;
+            if (result.content) {
+                let contentDisplay = '';
+                if (typeof result.content === 'object') {
+                    contentDisplay = JSON.stringify(result.content, null, 2);
+                } else {
+                    contentDisplay = String(result.content);
+                }
+                contentHtml += `
+                    <div class="mb-2">
+                        <pre class="bg-secondary p-2 rounded" style="white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto;">${escapeHtml(contentDisplay)}</pre>
+                    </div>
+                `;
+            } else {
+                contentHtml += '<div class="text-muted">无内容数据</div>';
+            }
+            contentResultContainer.innerHTML = contentHtml;
+            
+            // 显示结构化内容结果
+            let structuredHtml = successHeader;
+            if (result.structured_content) {
+                structuredHtml += `
+                    <div class="mb-2">
+                        <pre class="bg-secondary p-2 rounded" style="white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto;">${JSON.stringify(result.structured_content, null, 2)}</pre>
+                    </div>
+                `;
+            } else {
+                structuredHtml += '<div class="text-muted">无结构化内容数据</div>';
+            }
+            structuredResultContainer.innerHTML = structuredHtml;
+            
+        } else {
+            const errorHtml = `
+                <div class="text-danger">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    <strong>执行失败:</strong> ${escapeHtml(response.data.message)}
+                </div>
+                <div class="mt-2 text-muted">
+                    <strong>执行时间:</strong> ${new Date().toLocaleString()}
+                </div>
+            `;
+            contentResultContainer.innerHTML = errorHtml;
+            structuredResultContainer.innerHTML = errorHtml;
+        }
+        
+    } catch (error) {
+        console.error('工具测试失败:', error);
+        const errorHtml = `
+            <div class="text-danger">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                <strong>请求失败:</strong> ${escapeHtml(error.message)}
+            </div>
+            <div class="mt-2 text-muted">
+                <strong>执行时间:</strong> ${new Date().toLocaleString()}
+            </div>
+        `;
+        contentResultContainer.innerHTML = errorHtml;
+        structuredResultContainer.innerHTML = errorHtml;
+    } finally {
+        // 恢复按钮状态
+        executeBtn.disabled = false;
+        executeBtn.innerHTML = '<i class="fas fa-play me-1"></i>执行测试';
     }
 }
 

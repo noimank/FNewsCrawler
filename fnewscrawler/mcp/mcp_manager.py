@@ -2,20 +2,29 @@
 from fnewscrawler.mcp import mcp_server
 from fnewscrawler.core.redis_manager import  get_redis
 import os
-
+import threading
 class MCPManager:
     _instance = None
+    _lock = threading.Lock()
+    
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
+            with cls._lock:
+                # 双重检查锁定模式，避免多线程创建多个实例
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
         return cls._instance
         
     def __init__(self):
-        self.mcp_server = mcp_server
-        self.redis = get_redis()
-        #该环境变量用于区分多实例部署时，每个实例的mcp状态的记忆，方便恢复
-        self.deploy_node_name = os.getenv("DEPLOY_NODE_NAME", "FNewsCrawlerNode")
-    
+        # 确保__init__只被调用一次
+        if not hasattr(self, '_initialized'):
+            with self._lock:
+                if not hasattr(self, '_initialized'):
+                    self.mcp_server = mcp_server
+                    self.redis = get_redis()
+                    #该环境变量用于区分多实例部署时，每个实例的mcp状态的记忆，方便恢复
+                    self.deploy_node_name = os.getenv("DEPLOY_NODE_NAME", "FNewsCrawlerNode")
+                    self._initialized = True
     async def get_all_tools_info(self)->list:
         """
         获取所有工具

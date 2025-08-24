@@ -91,14 +91,13 @@ class TushareDataProvider:
                 start_date = (datetime.now() - timedelta(days=30)).strftime('%Y%m%d')
 
             querry_key = f"{ts_code}_{start_date}_{end_date}_{adjfactor}"
-            # df = self._get_cached_dataframe(querry_key)
-            # if df is not None:
-            #     LOGGER.info(f"adjfactor={adjfactor}，从缓存获取{ts_code}日线数据成功，共{len(df)}条记录")
-            #     return df
+            df = self._get_cached_dataframe(querry_key)
+            if df is not None:
+                LOGGER.info(f"adjfactor={adjfactor}，从缓存获取{ts_code}日线数据成功，共{len(df)}条记录")
+                return df
             if adjfactor:
                 # adj: 复权类型, None不复权, qfq: 前复权, hfq: 后复权
                 df = ts.pro_bar(ts_code=ts_code, start_date=start_date, end_date=end_date, adj='qfq', adjfactor=adjfactor)
-                print("adj",df.head(5))
             else:
                 df = self.pro.daily(ts_code=ts_code, start_date=start_date, end_date=end_date, fields=[
                 "ts_code",
@@ -113,7 +112,6 @@ class TushareDataProvider:
                 "vol",
                 "amount"
             ])
-                print("non_adj", df.head(5))
             LOGGER.info(f"获取{ts_code}日线数据成功，共{len(df)}条记录")
             if not df.empty:
                 self._cache_dataframe(querry_key, df)

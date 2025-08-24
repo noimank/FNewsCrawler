@@ -7,6 +7,7 @@ import fnewscrawler.mcp.iwencai
 import fnewscrawler.mcp.common
 import fnewscrawler.mcp.eastmoney
 import fnewscrawler.mcp.indicator
+import fnewscrawler.mcp.tushare
 
 
 __all__ = [

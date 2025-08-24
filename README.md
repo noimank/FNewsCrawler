@@ -192,6 +192,9 @@ GET http://localhost:8480/api/mcp/call_tool/news_crawl_batch?urls=http://example
   - MACD
   - RSI
   - VWMA
+  - ATR
+- [x] 股票筹码及胜率查询接口
+
 
 ### 📈 即将推出
 - [ ] 资金流向分析接口

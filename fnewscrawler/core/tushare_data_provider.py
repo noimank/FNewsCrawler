@@ -41,16 +41,16 @@ class TushareDataProvider:
                 self.pro = None
             self._initialized = True
 
-    def _cache_dataframe(self, querry_key: str, df: pd.DataFrame) -> bool:
+    def cache_dataframe(self, query_key: str, df: pd.DataFrame) -> bool:
         """缓存股票数据"""
-        key = f"stock:dataframe:{querry_key}"
+        key = f"stock:dataframe:{query_key}"
         # 从环境变量获取过期时间,单位天,默认3天
         expired_time = int(os.environ.get("STOCK_DATAFRAME_EXPIRED_TIME", 3)) * 86400
         return redis_manager.set(key, df, ex=expired_time, serializer='pickle')
 
-    def _get_cached_dataframe(self, querry_key: str) -> Optional[pd.DataFrame]:
+    def get_cached_dataframe(self, query_key: str) -> Optional[pd.DataFrame]:
         """获取缓存的股票数据"""
-        key = f"stock:dataframe:{querry_key}"
+        key = f"stock:dataframe:{query_key}"
         return redis_manager.get(key, serializer='pickle')
 
     def code2tscode(self, stock_code: str) -> str:
@@ -91,7 +91,7 @@ class TushareDataProvider:
                 start_date = (datetime.now() - timedelta(days=30)).strftime('%Y%m%d')
 
             querry_key = f"{ts_code}_{start_date}_{end_date}_{adjfactor}"
-            df = self._get_cached_dataframe(querry_key)
+            df = self.get_cached_dataframe(querry_key)
             if df is not None:
                 LOGGER.info(f"adjfactor={adjfactor}，从缓存获取{ts_code}日线数据成功，共{len(df)}条记录")
                 return df
@@ -114,7 +114,7 @@ class TushareDataProvider:
             ])
             LOGGER.info(f"获取{ts_code}日线数据成功，共{len(df)}条记录")
             if not df.empty:
-                self._cache_dataframe(querry_key, df)
+                self.cache_dataframe(querry_key, df)
             return df
 
         except Exception as e:
@@ -135,7 +135,7 @@ class TushareDataProvider:
 
         try:
             querry_key = f"stock_basic_{exchange}"
-            df = self._get_cached_dataframe(querry_key)
+            df = self.get_cached_dataframe(querry_key)
             if df is not None:
                 LOGGER.info(f"从缓存获取股票基本信息成功，共{len(df)}只股票")
                 return df
@@ -143,7 +143,7 @@ class TushareDataProvider:
             df = self.pro.stock_basic(exchange=exchange, list_status='L')
             LOGGER.info(f"获取股票基本信息成功，共{len(df)}只股票")
             if not df.empty:
-                self._cache_dataframe(querry_key, df)
+                self.cache_dataframe(querry_key, df)
             return df
 
         except Exception as e:
@@ -165,7 +165,7 @@ class TushareDataProvider:
 
         try:
             querry_key = f"trade_cal_{start_date}_{end_date}"
-            df = self._get_cached_dataframe(querry_key)
+            df = self.get_cached_dataframe(querry_key)
             if df is not None:
                 LOGGER.info(f"从缓存获取交易日历成功，共{len(df)}条记录")
                 return df
@@ -177,7 +177,7 @@ class TushareDataProvider:
             df = self.pro.trade_cal(start_date=start_date, end_date=end_date)
             LOGGER.info(f"获取交易日历成功，共{len(df)}条记录")
             if not df.empty:
-                self._cache_dataframe(querry_key, df)
+                self.cache_dataframe(querry_key, df)
             return df
 
         except Exception as e:

@@ -7,3 +7,4 @@ from .ma import stock_ma
 from .kdj import stock_kdj
 from .vwma import stock_vwma
 from .macd import stock_macd
+from .atr import stock_atr

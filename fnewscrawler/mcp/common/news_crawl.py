@@ -3,7 +3,7 @@ import os
 from fnewscrawler.mcp import mcp_server
 from fnewscrawler.core.news_crawl import news_crawl_from_url
 import asyncio
-
+from fnewscrawler.utils import parse_params2list
 
 @mcp_server.tool(title="通用新闻内容提取工具")
 async def news_crawl(url: str) -> str:
@@ -76,6 +76,7 @@ async def news_crawl_batch(urls: list[str]) -> list[dict]:
         3. 返回列表顺序与输入URL顺序保持一致
         4. 对于无法解析的页面，content可能为空字符串
     """
+    urls = parse_params2list(urls, str)
     # 创建信号量限制最大并发数为20
     semaphore = asyncio.Semaphore(int(os.getenv("MAX_CRAWL_CONCURRENCY", 20)))
 

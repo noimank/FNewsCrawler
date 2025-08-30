@@ -1,7 +1,7 @@
 from fnewscrawler.spiders.tushare import stock_cyq_perf, stock_cyq_chips
 from fnewscrawler.mcp import mcp_server
 
-@mcp_server.tool(title="获取A股每日筹码平均成本和胜率情况")
+@mcp_server.tool(title="获取A股每日筹码平均成本和胜率情况", enabled=False)
 async def get_stock_cyq_perf(stock_code: str, start_date: str, end_date: str)->str:
     """获取A股每日筹码平均成本和胜率情况
     提供各价位的成本和胜率情况
@@ -29,7 +29,7 @@ async def get_stock_cyq_perf(stock_code: str, start_date: str, end_date: str)->s
 
 
 
-@mcp_server.tool(title="获取A股每日筹码分布情况")
+@mcp_server.tool(title="获取A股每日筹码分布情况", enabled=False)
 async def get_stock_cyq_chips(stock_code: str, start_date: str, end_date: str)->str:
     """获取A股每日的筹码分布情况，提供各价位占比和筹码量占比
 

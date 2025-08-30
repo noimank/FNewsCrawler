@@ -15,3 +15,6 @@ pandas
 html5lib
 tushare
 TA-Lib
+sentence-transformers
+scikit-learn
+tqdm

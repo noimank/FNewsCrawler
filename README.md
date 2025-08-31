@@ -182,6 +182,43 @@ GET http://localhost:8480/api/mcp/call_tool/get_industry_stock_funds_flow_tool?i
 GET http://localhost:8480/api/mcp/call_tool/news_crawl_batch?urls=http://example.com,http://example2.com
 ```
 
+额外支持的功能：调用任意的akshare函数
+
+调用端点：http://localhost:8480/api/mcp/call_akshare/{fun_name}?xxxx
+
+参数：
+- fun_name：函数名称
+- xxxx：函数参数
+
+支持对返回结果进行处理：
+- duplicate_key：去重字段
+- drop_columns：删除字段，多个字段用逗号分隔
+- return_type：返回类型，markdown或json，默认markdown
+
+返回：
+- 函数执行结果，json格式，结果格式如下：
+
+```json
+
+{
+  "success": true,
+  "message": "调用工具 stock_zh_a_gbjg_em 成功",
+  "data": {
+    "result": xxxxx函数执行结果，markdown格式就是字符串，json格式就是list[str]xxxx
+  }
+}
+```
+
+示例：
+```
+GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol=603392.SH&return_type=json
+GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?duplicate_key=变更日期&drop_columns=流通受限股份,变动原因&return_type=json&symbol=603392.SH
+
+错误示例：
+GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol="603392.SH"&return_type=json
+
+不要给参数加上引号，单引号双引号都不要加
+```
 
 
 
@@ -215,6 +252,7 @@ GET http://localhost:8480/api/mcp/call_tool/news_crawl_batch?urls=http://example
 - [x] 股票筹码及胜率查询接口(tushare)
 - [x] 股票筹码分布查询接口(akshare)
 - [x] 接入akshare数据源
+- [x] 提供get端点调用任意akshare函数
 
 ### 📈 即将推出
 - [ ] 资金流向分析接口

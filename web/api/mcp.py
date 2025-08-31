@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from fnewscrawler.mcp.mcp_manager import MCPManager
 from fnewscrawler.utils.logger import LOGGER
+from fnewscrawler.spiders.akshare import ak_super_fun
 
 # 创建路由器
 router = APIRouter()
@@ -287,4 +288,35 @@ async def call_mcp_tool(tool_name: str, request: Request):
         return APIResponse(
             success=False,
             message=f"调用工具 {tool_name} 失败: {str(e)}",
+        )
+
+@router.get("/call_akshare/{fun_name}", response_model=APIResponse)
+async def call_akshare_tool(fun_name: str, request: Request):
+    """
+    调用指定的akshare工具
+
+    Args:
+        fun_name: 函数名称
+        request: 请求对象，包含查询参数
+
+    Returns:
+        工具执行结果
+    """
+    try:
+        params = dict(request.query_params)
+        duplicate_key = params.pop('duplicate_key', "")
+        drop_columns = params.pop('drop_columns', "")
+        return_type = params.pop('return_type', "markdown")
+
+        result =  ak_super_fun(fun_name=fun_name, duplicate_key=duplicate_key, drop_columns=drop_columns, return_type=return_type, **params)
+
+        return APIResponse(
+            success=True,
+            message=f"调用工具 {fun_name} 成功",
+            data= {"result": result}
+        )
+    except Exception as e:
+        return APIResponse(
+            success=False,
+            message=f"调用工具 {fun_name} 失败: {str(e)}",
         )

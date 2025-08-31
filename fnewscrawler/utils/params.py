@@ -11,12 +11,10 @@ def parse_params2list(params: str , data_type=int) -> list:
     if isinstance(params, list):
         return [data_type(p) for p in params]
 
-    if isinstance(params, data_type):
-        return [params]
-
     # 转换为英文符号
     if isinstance(params, str) and "，" in params:
         params = params.replace("，", ",")
+
 
     if params.startswith('[') and params.endswith(']'):
         params = params[1:-1]
@@ -50,7 +48,6 @@ def  format_param(param, param_type :type):
         return param_type(param)
 
     raise ValueError(f"参数{param}不能转换为{param_type}类型")
-
 
 
 

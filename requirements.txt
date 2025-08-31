@@ -18,3 +18,4 @@ TA-Lib
 sentence-transformers
 scikit-learn
 tqdm
+akshare

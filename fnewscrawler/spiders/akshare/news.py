@@ -20,19 +20,25 @@ def ak_news_cctv(date: str)->str:
     return markdown_table
 
 
-def ak_stock_news_em(stock_code: str)->str:
+def ak_stock_news_em(stock_code: str, start_date: str = "20250829")->str:
     """获取akshare股票新闻数据
 
     来源：东方财富，最近100条相关新闻，新闻内容并非完整，只是截取的部分内容
 
     Args:
         stock_code: 股票代码，如'600000'
+        start_date: 开始日期，格式'YYYYMMDD'，如'20250829'
 
     Returns:
         包含新闻数据的DataFrame，列名包括：新闻标题、新闻内容、发布时间、文章来源
     """
     stock_news_em_df = ak.stock_news_em(symbol=stock_code)
-    #丢弃一些列
+    # 转换日期格式用于比较
+    start_date = pd.to_datetime(start_date)
+    # 转换pub_time为日期时间格式
+    stock_news_em_df["发布时间"] = pd.to_datetime(stock_news_em_df["发布时间"])
+    # 丢弃一些列
+    stock_news_em_df = stock_news_em_df[stock_news_em_df["发布时间"] >= start_date]
     stock_news_em_df = stock_news_em_df.drop(columns=["关键词", "新闻链接"])
     markdown_table = stock_news_em_df.to_markdown(index=False)
     return markdown_table
@@ -63,3 +69,6 @@ def ak_stock_news_main_cx(start_date: str = "20250829")->str:
     # 转换为markdown表格
     markdown_table = stock_news_main_cx_df.to_markdown(index=False)
     return markdown_table
+
+if __name__ == '__main__':
+    ak_stock_news_em("600000")

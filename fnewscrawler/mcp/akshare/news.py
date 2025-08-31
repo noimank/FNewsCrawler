@@ -18,18 +18,19 @@ def get_ak_news_cctv(date: str)->str:
 
 
 @mcp_server.tool(title="从akshare获取股票新闻数据")
-def get_ak_stock_news_em(stock_code: str)->str:
+def get_ak_stock_news_em(stock_code: str, start_date: str = "20250829")->str:
     """从akshare获取股票新闻数据
 
-    来源：东方财富，最近100条相关新闻，新闻内容并非完整，只是截取的部分内容
+    来源：东方财富，返回start_date之后的相关新闻，新闻内容并非完整，只是截取的部分内容
 
     Args:
         stock_code: 股票代码，如'600000'
+        start_date: 开始日期，格式'YYYYMMDD'，如'20250829'
 
     Returns:
         包含新闻数据的markdown表格，列名包括：新闻标题、新闻内容、发布时间、文章来源
     """
-    markdown_table = ak_stock_news_em(stock_code)
+    markdown_table = ak_stock_news_em(stock_code, start_date)
     return markdown_table
 
 

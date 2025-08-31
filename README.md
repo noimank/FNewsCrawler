@@ -86,6 +86,25 @@ docker logs fnewscrawler -f
 ```bash
 git clone https://github.com/noimank/FNewsCrawler.git
 cd FNewsCrawler
+
+#注意，由于新闻文本去重模型使用lfs，所以需要先安装lfs，官网：https://git-lfs.com ，按自己的平台安装
+# 拉取lfs文件，获取实际的模型，否则新闻(tushare源)获取会失败
+git lfs pull
+
+附录：
+# 1.windows平台安装：
+
+进入：https://git-lfs.com/ 官网下载安装进行
+
+# 2.linux平台安装：
+# 下载最新版 Git LFS（适用于 Linux amd64）
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+sudo apt install git-lfs
+
+# 3.maxos
+brew install git-lfs
+
+
 ```
 
 2. **安装依赖**

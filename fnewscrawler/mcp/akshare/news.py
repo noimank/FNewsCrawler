@@ -1,4 +1,4 @@
-from fnewscrawler.spiders.akshare import ak_news_cctv, ak_stock_news_em
+from fnewscrawler.spiders.akshare import ak_news_cctv, ak_stock_news_em, ak_stock_news_main_cx
 from fnewscrawler.mcp import mcp_server
 
 
@@ -30,6 +30,23 @@ def get_ak_stock_news_em(stock_code: str)->str:
         包含新闻数据的markdown表格，列名包括：新闻标题、新闻内容、发布时间、文章来源
     """
     markdown_table = ak_stock_news_em(stock_code)
+    return markdown_table
+
+
+
+@mcp_server.tool(title="从akshare获取财经内容精选数据")
+def get_ak_stock_news_main_cx(start_date: str = "20250829")->str:
+    """从akshare获取财经内容精选数据
+
+    来源： 财新网-财新数据通-内容精选,返回start_date之后的新闻
+
+    Args:
+        start_date: 开始日期，格式'YYYYMMDD'，如'20250829'
+
+    Returns:
+        包含新闻数据的markdown表格，列名包括：新闻标签、新闻内容、发布时间
+    """
+    markdown_table = ak_stock_news_main_cx(start_date)
     return markdown_table
 
 

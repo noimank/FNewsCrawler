@@ -41,11 +41,12 @@ class TushareDataProvider:
                 self.pro = None
             self._initialized = True
 
-    def cache_dataframe(self, query_key: str, df: pd.DataFrame) -> bool:
+    def cache_dataframe(self, query_key: str, df: pd.DataFrame, expired_time: int = None) -> bool:
         """缓存股票数据"""
         key = f"stock:dataframe:{query_key}"
         # 从环境变量获取过期时间,单位天,默认3天
-        expired_time = int(os.environ.get("STOCK_DATAFRAME_EXPIRED_TIME", 3)) * 86400
+        if expired_time is None:
+            expired_time = int(os.environ.get("STOCK_DATAFRAME_EXPIRED_TIME", 3)) * 86400
         return redis_manager.set(key, df, ex=expired_time, serializer='pickle')
 
     def get_cached_dataframe(self, query_key: str) -> Optional[pd.DataFrame]:
@@ -114,7 +115,8 @@ class TushareDataProvider:
             ])
             LOGGER.info(f"获取{ts_code}日线数据成功，共{len(df)}条记录")
             if not df.empty:
-                self.cache_dataframe(querry_key, df)
+                #10分钟缓存，主要是考虑到当天数据可能没进入tushare数据库，缓存太久可能导致不能获取最新的数据
+                self.cache_dataframe(querry_key, df, expired_time=60 * 10)
             return df
 
         except Exception as e:

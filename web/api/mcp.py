@@ -307,8 +307,10 @@ async def call_akshare_tool(fun_name: str, request: Request):
         duplicate_key = params.pop('duplicate_key', "")
         drop_columns = params.pop('drop_columns', "")
         return_type = params.pop('return_type', "markdown")
+        filter_condition  = params.pop("filter_condition", "")
 
-        result =  ak_super_fun(fun_name=fun_name, duplicate_key=duplicate_key, drop_columns=drop_columns, return_type=return_type, **params)
+
+        result =  ak_super_fun(fun_name=fun_name, duplicate_key=duplicate_key, drop_columns=drop_columns, return_type=return_type, filter_condition=filter_condition, **params)
 
         return APIResponse(
             success=True,

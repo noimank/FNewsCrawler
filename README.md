@@ -194,6 +194,7 @@ GET http://localhost:8480/api/mcp/call_tool/news_crawl_batch?urls=http://example
 - duplicate_key：去重字段
 - drop_columns：删除字段，多个字段用逗号分隔
 - return_type：返回类型，markdown或json，默认markdown
+- filter_condition：筛选条件字符串，类似于sql语法，采用pandas的query语句实现，参考：https://gairuo.com/p/pandas-query
 
 返回：
 - 函数执行结果，json格式，结果格式如下：
@@ -213,11 +214,13 @@ GET http://localhost:8480/api/mcp/call_tool/news_crawl_batch?urls=http://example
 ```
 GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol=603392.SH&return_type=json
 GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?duplicate_key=变更日期&drop_columns=流通受限股份,变动原因&return_type=json&symbol=603392.SH
+GET http://localhost:8480/api/mcp/call_akshare/news_trade_notify_dividend_baidu?return_type=json&date=20240409&filter_condition=交易所 == "SZ"
+
 
 错误示例：
 GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol="603392.SH"&return_type=json
 
-不要给参数加上引号，单引号双引号都不要加
+不要给参数加上引号，单引号双引号都不要加,filter_condition除外
 ```
 
 

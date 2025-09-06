@@ -5,7 +5,7 @@ import akshare as ak
 from fnewscrawler.utils import parse_params2list, format_param
 
 
-def ak_super_fun(fun_name: str, duplicate_key="", drop_columns: str = "", return_type: str = 'json',
+def ak_super_fun(fun_name: str, duplicate_key="", drop_columns: str = "", return_type: str = 'json',filter_condition="",
                  **kwargs) -> dict | str:
     """调用akshare的函数
     
@@ -14,6 +14,7 @@ def ak_super_fun(fun_name: str, duplicate_key="", drop_columns: str = "", return
         duplicate_key: 去重键，可以指定根据哪一列进行去重
         drop_columns: 要删除的列名，多个列名用逗号分隔
         return_type: 返回类型，可选'json'或'markdown'，默认'json'
+        filter_condition: 筛选条件字符串
         **kwargs: 函数参数
     
     Returns:
@@ -29,18 +30,25 @@ def ak_super_fun(fun_name: str, duplicate_key="", drop_columns: str = "", return
         duplicate_key = format_param(duplicate_key, str)
         drop_columns = format_param(drop_columns, str)
         return_type = format_param(return_type, str)
+        filter_condition = format_param(filter_condition, str)
 
         # 执行函数并返回结果
         df = fun(**kwargs)
+        #去重
         if duplicate_key in df.columns:
             df = df.drop_duplicates(subset=[duplicate_key])
         else:
             df = df.drop_duplicates()
         df = df.reset_index(drop=True)
+        #丢弃特定列
         if drop_columns:
             drop_columns = parse_params2list(drop_columns, str)
             df = df.drop(columns=drop_columns)
+        #筛选,类似与sql语句进行筛选
+        if filter_condition:
+            df = df.query(filter_condition)
 
+        #准备格式返回
         if return_type == 'markdown':
             df = df.to_markdown(index=False)
         elif return_type == "json":

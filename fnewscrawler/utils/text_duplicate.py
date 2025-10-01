@@ -116,6 +116,7 @@ def _get_model(cache_dir=None):
     global _MODEL
     if cache_dir is None:
         home = Path.home()
+        model_name: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
         safe_model_name = model_name.replace("/", "_")
         cache_dir = home / "sentence-transformers" / safe_model_name
     if _MODEL is None:

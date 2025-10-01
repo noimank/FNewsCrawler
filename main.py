@@ -16,7 +16,9 @@ project_root = Path(__file__).absolute()
 sys.path.insert(0, str(project_root))
 
 from fnewscrawler.utils.logger import LOGGER
+from fnewscrawler.utils.text_duplicate import download_sentence_transformer_model
 import asyncio
+import threading
 
 # 检查当前平台是否为 Windows
 if sys.platform == 'win32':
@@ -31,6 +33,10 @@ def main():
     """主函数"""
     try:
         LOGGER.info("正在启动FNewsCrawler Web应用...")
+        #启动一个后台线程进行下载模型
+        download_thread = threading.Thread(target=download_sentence_transformer_model)
+        download_thread.daemon = True
+        download_thread.start()
 
         host_addr = os.getenv("WEB_HOST", "localhost")
         port = int(os.getenv("WEB_PORT", 8480))

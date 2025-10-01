@@ -14,9 +14,9 @@ COPY . .
 RUN uv  pip  install --system --no-cache-dir -r requirements.txt
 
 # 安装Playwright浏览器
-RUN playwright install chromium
-
-RUN playwright install-deps chromium || true
+RUN playwright install chromium && \
+    playwright install-deps chromium || true && \
+    rm -rf /var/lib/apt/lists/* \
 
 # 设置环境变量
 ENV PYTHONPATH=/app
@@ -40,4 +40,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8480/api/monitor/overview || exit 1
 
 # 启动命令
-CMD ["/app/start.sh"]
+ENTRYPOINT ["/app/start.sh"]

@@ -1,12 +1,15 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Base Image
 
 on:
   push:
+    paths:
+      - 'docker/Dockerfile-base'
     branches: [ "main" ]
   workflow_dispatch:
 
+
 jobs:
-  build_and_push:
+  build_and_push_base:
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -24,10 +27,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push fnewscrawler image
+      - name: Build and push fnewscrawler base image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: docker/Dockerfile
+          file: docker/Dockerfile-base
           push: true
-          tags: noimankdocker/fnewscrawler:latest
+          tags: noimankdocker/fnewscrawler:dev

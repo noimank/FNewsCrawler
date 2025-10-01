@@ -23,7 +23,7 @@ docker/
 # 一键启动服务
 docker run --name fnewscrawler \
   -p 8480:8480 \
-  -d ghcr.io/noimank/fnewscrawler:latest
+  -d noimankdocker/fnewscrawler:latest
 
 # 查看启动日志
 docker logs fnewscrawler -f

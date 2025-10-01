@@ -178,6 +178,9 @@ GET http://localhost:8480/api/mcp/call_tool/news_crawl_batch?urls=http://example
 - drop_columns：删除字段，多个字段用逗号分隔
 - return_type：返回类型，markdown或json，默认markdown
 - filter_condition：筛选条件字符串，类似于sql语法，采用pandas的query语句实现，参考：https://gairuo.com/p/pandas-query
+- limit：返回数据条数限制，默认不限制
+- sort_by：排序字段，指定按哪一列进行排序
+- ascending：排序方式，true为升序，false为降序，默认true
 
 返回：
 - 函数执行结果，json格式，结果格式如下：
@@ -199,12 +202,22 @@ GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol=603392.
 GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?duplicate_key=变更日期&drop_columns=流通受限股份,变动原因&return_type=json&symbol=603392.SH
 GET http://localhost:8480/api/mcp/call_akshare/news_trade_notify_dividend_baidu?return_type=json&date=20240409&filter_condition=交易所 == "SZ"
 
+# 排序和限制示例
+GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_hist?symbol=000001&sort_by=日期&ascending=true&limit=10
+GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_hist?symbol=000001&sort_by=收盘&ascending=false&limit=5&return_type=json
+GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_hist?symbol=000001&filter_condition=收盘 > 10&sort_by=成交量&ascending=false&limit=3&drop_columns=变动因素
+```
+
 
 错误示例：
-GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol="603392.SH"&return_type=json
-
-不要给参数加上引号，单引号双引号都不要加,filter_condition除外
 ```
+GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol="603392.SH"&return_type=json
+```
+
+**注意事项：**
+- 不要给参数加上引号，单引号双引号都不要加，filter_condition除外
+- sort_by字段必须是返回数据中的实际列名
+- limit必须是正整数，ascending支持true/false、1/0、yes/no等格式
 
 
 

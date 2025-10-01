@@ -5,21 +5,24 @@ import akshare as ak
 from fnewscrawler.utils import parse_params2list, format_param
 
 
-def ak_super_fun(fun_name: str, duplicate_key="", drop_columns: str = "", return_type: str = 'json',filter_condition="",
-                 **kwargs) -> dict | str:
+def ak_super_fun(fun_name: str, duplicate_key="", drop_columns: str = "", return_type: str = 'json',filter_condition="", limit: int  = None,
+                 sort_by: str = None, ascending: bool = True, **kwargs) -> dict | str:
     """调用akshare的函数
-    
+
     Args:
         fun_name: akshare函数名称
         duplicate_key: 去重键，可以指定根据哪一列进行去重
         drop_columns: 要删除的列名，多个列名用逗号分隔
         return_type: 返回类型，可选'json'或'markdown'，默认'json'
         filter_condition: 筛选条件字符串
+        limit: 返回数据的最大条数，None表示返回所有数据
+        sort_by: 排序依据的列名，None表示不排序
+        ascending: 排序方式，True为升序，False为降序
         **kwargs: 函数参数
-    
+
     Returns:
         Any: 函数返回结果
-        
+
     Raises:
         AttributeError: 当函数不存在时抛出
         Exception: 函数执行出错时抛出
@@ -47,6 +50,14 @@ def ak_super_fun(fun_name: str, duplicate_key="", drop_columns: str = "", return
         #筛选,类似与sql语句进行筛选
         if filter_condition:
             df = df.query(filter_condition)
+
+        #排序
+        if sort_by is not None and sort_by in df.columns:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        #限制返回数据条数
+        if limit is not None and limit > 0:
+            df = df.head(limit)
 
         #准备格式返回
         if return_type == 'markdown':

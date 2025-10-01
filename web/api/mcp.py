@@ -6,13 +6,14 @@ MCP管理API接口
 提供MCP工具的管理功能，包括查看、启用、禁用等操作
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
-from typing import List, Optional
 
 from fnewscrawler.mcp.mcp_manager import MCPManager
-from fnewscrawler.utils.logger import LOGGER
 from fnewscrawler.spiders.akshare import ak_super_fun
+from fnewscrawler.utils.logger import LOGGER
 
 # 创建路由器
 router = APIRouter()
@@ -308,9 +309,38 @@ async def call_akshare_tool(fun_name: str, request: Request):
         drop_columns = params.pop('drop_columns', "")
         return_type = params.pop('return_type', "markdown")
         filter_condition  = params.pop("filter_condition", "")
+        limit = params.pop("limit", None)
+        sort_by = params.pop("sort_by", None)
+        ascending = params.pop("ascending", True)
 
 
-        result =  ak_super_fun(fun_name=fun_name, duplicate_key=duplicate_key, drop_columns=drop_columns, return_type=return_type, filter_condition=filter_condition, **params)
+        # 处理limit参数类型转换
+        if limit is not None and limit != "":
+            try:
+                limit = int(limit)
+            except ValueError:
+                limit = None
+
+        # 处理ascending参数类型转换
+        if ascending is not None and ascending != "":
+            try:
+                ascending = ascending.lower() in ('true', '1', 'yes', 'on')
+            except (ValueError, AttributeError):
+                ascending = True
+        else:
+            ascending = True
+
+        result =  ak_super_fun(
+            fun_name=fun_name,
+            duplicate_key=duplicate_key,
+            drop_columns=drop_columns,
+            return_type=return_type,
+            filter_condition=filter_condition,
+            limit=limit,
+            sort_by=sort_by,
+            ascending=ascending,
+            **params
+        )
 
         return APIResponse(
             success=True,

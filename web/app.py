@@ -3,7 +3,7 @@
 """
 FastAPI Web应用主文件
 
-提供财经新闻爬虫和登录管理的Web API接口
+提供财经新闻登录管理的Web API接口
 """
 import os
 from contextlib import asynccontextmanager
@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from fnewscrawler.utils.logger import LOGGER
-from .api import login_router, crawler_router, monitor_router, mcp_router
+from .api import login_router, monitor_router, mcp_router, tools_router
 from fnewscrawler.mcp import mcp_server
 from fnewscrawler.mcp.mcp_manager import MCPManager
 
@@ -79,7 +79,7 @@ async def combined_lifespan(app: FastAPI):
 
 app = FastAPI(
     title="FNewsCrawler Web API",
-    description="财经新闻爬虫和登录管理Web应用",
+    description="财经新闻登录管理Web应用",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -117,9 +117,9 @@ app.mount("/mcp", mcp_app)
 
 # 注册API路由
 app.include_router(login_router, prefix="/api/login", tags=["登录管理"])
-app.include_router(crawler_router, prefix="/api/crawler", tags=["爬虫管理"])
 app.include_router(monitor_router, prefix="/api/monitor", tags=["系统监控"])
 app.include_router(mcp_router, prefix="/api/mcp", tags=["MCP管理"])
+app.include_router(tools_router, prefix="/api/call_tools", tags=["get方法调用各类工具"])
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -142,14 +142,6 @@ async def login_page(request: Request):
     )
 
 
-@app.get("/crawler", response_class=HTMLResponse)
-async def crawler_page(request: Request):
-    """爬虫管理页面"""
-    return templates.TemplateResponse(
-        request,
-        "crawler.html", 
-        {"title": "爬虫管理"}
-    )
 
 
 @app.get("/monitor", response_class=HTMLResponse)

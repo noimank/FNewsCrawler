@@ -17,11 +17,7 @@
                         <i class="fas fa-sign-in-alt me-2"></i>
                         登录管理
                     </a>
-                    <a href="/crawler" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-spider me-2"></i>
-                        开始爬取
-                    </a>
-                </div>
+                  </div>
             </div>
         </div>
     </div>
@@ -45,21 +41,6 @@
         </div>
     </div>
     
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body text-center">
-                <div class="mb-3">
-                    <i class="fas fa-robot fa-3x text-success"></i>
-                </div>
-                <h5 class="card-title">智能爬取</h5>
-                <p class="card-text">自动化新闻内容抓取，支持多种输出格式</p>
-                <a href="/crawler" class="btn btn-success">
-                    <i class="fas fa-arrow-right me-1"></i>
-                    开始爬取
-                </a>
-            </div>
-        </div>
-    </div>
     
     <div class="col-md-4 mb-4">
         <div class="card h-100 shadow-sm">
@@ -147,20 +128,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <h6>爬虫管理</h6>
-                        <div class="d-flex gap-2 mb-3">
-                            <button class="btn btn-sm btn-outline-success" onclick="viewActiveTasks()">
-                                <i class="fas fa-list me-1"></i>
-                                查看任务
-                            </button>
-                            <button class="btn btn-sm btn-outline-info" onclick="testCrawl()">
-                                <i class="fas fa-play me-1"></i>
-                                测试爬取
-                            </button>
-                        </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>
@@ -179,26 +147,22 @@ document.addEventListener('DOMContentLoaded', function() {
 // 加载系统状态
 async function loadSystemStatus() {
     try {
-        // 获取爬虫任务状态
-        const crawlerResponse = await axios.get('/api/crawler/tasks');
-        if (crawlerResponse.data.success) {
-            const tasks = crawlerResponse.data.data.tasks;
-            const activeTasks = tasks.filter(t => t.status === 'running').length;
-            const completedTasks = tasks.filter(t => t.status === 'completed').length;
-            
-            document.getElementById('active-tasks').textContent = activeTasks;
-            document.getElementById('completed-tasks').textContent = completedTasks;
-        }
-        
         // 获取登录任务状态
         const loginResponse = await axios.get('/api/login/active-tasks');
         if (loginResponse.data.success) {
             const loginTasks = loginResponse.data.data.tasks.length;
             document.getElementById('login-sessions').textContent = loginTasks;
         }
-        
+
+        // 设置默认值
+        document.getElementById('active-tasks').textContent = '0';
+        document.getElementById('completed-tasks').textContent = '0';
+
     } catch (error) {
         console.error('获取系统状态失败:', error);
+        // 设置默认值
+        document.getElementById('active-tasks').textContent = '0';
+        document.getElementById('completed-tasks').textContent = '0';
     }
 }
 
@@ -237,14 +201,5 @@ async function clearLoginCache() {
     }
 }
 
-// 查看活跃任务
-function viewActiveTasks() {
-    window.location.href = '/crawler#tasks';
-}
-
-// 测试爬取
-function testCrawl() {
-    window.location.href = '/crawler#test';
-}
 </script>
 {% endblock %}

@@ -7,8 +7,8 @@ API路由模块
 """
 
 from .login import router as login_router
-from .crawler import router as crawler_router
 from .monitor import router as monitor_router
 from .mcp import router as mcp_router
+from .tools import router as tools_router
 
-__all__ = ["login_router", "crawler_router", "monitor_router", "mcp_router"]
+__all__ = ["login_router", "monitor_router", "mcp_router", "tools_router"]

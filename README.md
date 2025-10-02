@@ -219,6 +219,8 @@ GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol="603392
 - sort_by字段必须是返回数据中的实际列名
 - limit必须是正整数，ascending支持true/false、1/0、yes/no等格式
 
+> 📚 **详细文档**：查看 [GET API 接口文档](docs/get_api.md) 了解完整的接口说明、参数配置和使用示例。
+
 
 
 

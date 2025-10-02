@@ -252,10 +252,9 @@ GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol="603392
 - [x] 股票筹码分布查询接口(akshare)
 - [x] 接入akshare数据源
 - [x] 提供get端点调用任意akshare函数
+- [x] 北向/南向资金流向
 
 ### 📈 即将推出
-- [ ] 资金流向分析接口
-  - 北向/南向资金流向
 - [ ] 龙虎榜数据接口
   - 机构交易明细
   - 营业部排名分析
@@ -263,6 +262,9 @@ GET http://localhost:8480/api/mcp/call_akshare/stock_zh_a_gbjg_em?symbol="603392
   - 实时行情推送
   - 盘口数据分析
 
+tips：
+
+大部分接口如果没有做成mcp接口的话，可以通过get方法调用akshare函数实现。
 
 ### 🎯 长期规划
 - [ ] 扩展更多财经数据源

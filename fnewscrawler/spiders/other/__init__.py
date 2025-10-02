@@ -1,0 +1,1 @@
+from .web_crawl import  extract_structured_data,extract_table_data

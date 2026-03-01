@@ -1,4 +1,5 @@
-# FNewsCrawler
+# FNewsCrawler （该项目已放弃维护）
+## 由于架构设计不合理，后期维护极其复杂，现在已经放弃维护，请转向新项目：https://github.com/noimank/OmniData
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
